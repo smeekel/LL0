@@ -9,7 +9,7 @@
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
     </Filter>
-    <Filter Include="Test">
+    <Filter Include="Test Cases">
       <UniqueIdentifier>{7a696880-562a-43a3-a83c-4caf4a2b8af5}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
@@ -60,8 +60,8 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="..\test.txt">
-      <Filter>Test</Filter>
+    <Text Include="..\testcases\test0.txt">
+      <Filter>Test Cases</Filter>
     </Text>
   </ItemGroup>
 </Project>

@@ -15,7 +15,7 @@ void main()
 
   try
   {
-    Lexer l(new IStreamFile("test.txt"));
+    Lexer l(new IStreamFile("testcases/test0.txt"));
 
     Token* t;
     while( (t = l.next())->getType()!=T_EOF )
