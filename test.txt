@@ -1,0 +1,21 @@
+// comment
+/* another 
+  comment 
+*/
+
+1         //valid
+123       //valid
+0x123AF   //valid
+0734      //valid
+0b1101    //valid
+0.0       //valid
+3.1415926 //valid
+
+//0x12EG    //invalid
+//0b0123    //invalid
+//0891      //invalid
+0.        //invalid
+
+1 + 2 * 3;
+
+//
