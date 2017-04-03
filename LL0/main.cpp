@@ -11,18 +11,11 @@ using namespace LL0;
 
 void main()
 {
-  Parser* parser = NULL;
+  Parser parser(new IStreamFile("testcases/test1.txt"));
 
   try
   {
-    Lexer l(new IStreamFile("testcases/test0.txt"));
-
-    Token* t;
-    while( (t = l.next())->getType()!=T_EOF )
-    {
-      printf(": %d\n", t->getType());
-      SAFE_DELETE(t);
-    }
+    parser.test();
   }
   catch( const Exception& e )
   {
@@ -30,5 +23,4 @@ void main()
     std::printf("exception [%s]\n", e.getMessage());
   }
 
-  SAFE_DELETE(parser);
 }

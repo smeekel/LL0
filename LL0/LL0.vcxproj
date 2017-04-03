@@ -148,6 +148,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Exception.h" />
+    <ClInclude Include="Node.h" />
     <ClInclude Include="StringBuffer.h" />
     <ClInclude Include="IStream.h" />
     <ClInclude Include="IStreamFile.h" />
@@ -158,6 +159,7 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="..\testcases\test0.txt" />
+    <Text Include="..\testcases\test1.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

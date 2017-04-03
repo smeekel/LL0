@@ -13,11 +13,12 @@ namespace LL0
     ~StringBuffer();
 
   public:
-    StringBuffer& operator=(const StringBuffer&);
-    operator const char* () const { return ptr; }
+    void        clear     ();
+    void        push      (const char c);
+    const char* toString  () const { return ptr; }
 
-    void  clear   ();
-    void  push    (const char c);
+    StringBuffer& operator=             (const StringBuffer&);
+                  operator const char*  () const { return toString(); }
 
   protected:
     char*     ptr;

@@ -24,23 +24,16 @@ Lexer::~Lexer()
 }
 
 
-Token* Lexer::next()
+SmartToken Lexer::next()
 {
   const Tokens t = lexNext();
 
-  Token* token = new Token();
-  try
-  {
-    token->type   = t;
-    token->line   = lineNumber;
-    token->column = columnNumber;
-    token->text   = tokenRaw;
-  }
-  catch( ... )
-  {
-    SAFE_DELETE(token);
-    throw;
-  }
+  SmartToken token(new Token());
+
+  token->type   = t;
+  token->line   = lineNumber;
+  token->column = columnNumber;
+  token->text   = tokenRaw;
 
   return token;
 }
