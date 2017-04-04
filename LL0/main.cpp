@@ -11,7 +11,7 @@ using namespace LL0;
 
 void main()
 {
-  Parser parser(new IStreamFile("testcases/test1.txt"));
+  Parser parser(new IStreamFile("testcases/test2.txt"));
 
   try
   {

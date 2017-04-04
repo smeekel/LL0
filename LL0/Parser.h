@@ -6,6 +6,7 @@
 
 namespace LL0
 {
+  class Node;
 
   class Parser
   {
@@ -17,15 +18,21 @@ namespace LL0
     void test();
 
   protected:
-    int   accept    (const Tokens type);
-    int   acceptMany(const Tokens type, ...);
     void  next      ();
+    int   accept    (const Tokens type);
 
   private:
-    class Node* pProgam     ();
-    class Node* pExpression ();
-    class Node* pTerm       ();
-    class Node* pFactor     ();
+    Node*   pProgam               ();
+    Node*   pStatements           ();
+    Node*   pStatement            ();
+    Node*   pIfStatement          ();
+    Node*   pBlockStatement       ();
+    Node*   pExpressionStatement  ();
+    Node*   pExpression           ();
+    Node*   pTerm                 ();
+    Node*   pFactor               ();
+
+    bool    isExpression          ();
 
   private:
     Lexer       lexer;

@@ -18,6 +18,7 @@ namespace LL0
     T_OCT_NUMBER,
     T_BIN_NUMBER,
     T_STRING,
+    T_IDENT,
 
     T_PLUS,
     T_MINUS,
@@ -25,8 +26,18 @@ namespace LL0
     T_DIV,
     T_DOT,
 
+    T_LPREN,
     T_RPREN,
-    T_LPREN
+    T_LBRACE,
+    T_RBRACE,
+
+    T_IF,
+    T_ELSE,
+    T_RETURN,
+    T_FOR,
+    T_WHILE,
+    T_TRUE,
+    T_FALSE
   };
 
   class Token

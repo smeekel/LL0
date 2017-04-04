@@ -33,6 +33,7 @@ namespace LL0
     Tokens  lexReadNumber   ();
     void    lexBinaryNumber ();
     void    lexHexNumber    ();
+    Tokens  lexReadLiteral  ();
 
   private:
     class IStream*  input;

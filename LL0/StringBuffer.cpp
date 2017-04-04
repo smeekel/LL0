@@ -1,7 +1,9 @@
 #include <memory>
+#include <cstring>
 #include "StringBuffer.h"
 
 using namespace LL0;
+
 
 StringBuffer::StringBuffer()
 {
@@ -54,4 +56,14 @@ StringBuffer& StringBuffer::operator=(const StringBuffer& other)
   }
 
   return *this;
+}
+
+bool StringBuffer::compare(const char* string) const
+{
+  if( ptr==NULL )
+    return (string==NULL);
+  if( string==NULL )
+    return false;
+
+  return std::strcmp(ptr, string)==0 ;
 }

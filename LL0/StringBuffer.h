@@ -15,6 +15,8 @@ namespace LL0
   public:
     void        clear     ();
     void        push      (const char c);
+    bool        compare   (const char* string) const;
+    
     const char* toString  () const { return ptr; }
 
     StringBuffer& operator=             (const StringBuffer&);

@@ -11,11 +11,14 @@ namespace LL0
     N_EXPRESSION,
 
     N_N_LITERAL,
+    N_IDENT,
 
     N_PLUS,
     N_MINUS,
     N_MUL,
     N_DIV,
+
+    N_IF,
   };
 
 
@@ -31,6 +34,7 @@ namespace LL0
       CASE(N_MINUS)
       CASE(N_MUL)
       CASE(N_DIV)
+      CASE(N_IF)
       default: return "*UNKNOWN*";
     }
   }
@@ -40,22 +44,18 @@ namespace LL0
   class Node
   {
   public:
-    Node(const NodeTypes type)
-    {
-      this->type  = type;
-      this->A     = NULL;
-      this->B     = NULL;
-    }
-    Node(const NodeTypes type, Node* A, Node* B=NULL)
+    Node(const NodeTypes type, Node* A=NULL, Node* B=NULL, Node* C=NULL)
     {
       this->type  = type;
       this->A     = A;
       this->B     = B;
+      this->C     = C;
     }
     ~Node()
     {
       SAFE_DELETE(A);
       SAFE_DELETE(B);
+      SAFE_DELETE(C);
     }
 
   public:
@@ -67,6 +67,7 @@ namespace LL0
       printf("\n");
       if( A ) A->print(index+1);
       if( B ) B->print(index+1);
+      if( C ) C->print(index+1);
     }
 
     void setToken(const Token& other)
@@ -79,6 +80,7 @@ namespace LL0
     Token     token;
     Node*     A;
     Node*     B;
+    Node*     C;
 
   };
 

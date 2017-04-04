@@ -6,8 +6,19 @@
 
 using namespace LL0;
 
-#define ACCEPT(...) acceptMany(__VA_ARGS__, -1)
+//#define ACCEPT(...) acceptMany(__VA_ARGS__, -1)
 #define TYPE (type)
+
+#define ACCEPT(x) accept(x)
+
+#define EXPECT(x, c) \
+{ \
+  if( TYPE!=(x) ) \
+    throw EXCEPTION("(%d:%d) Syntax error: expected " #c, token->getLine(), token->getColumn()); \
+  else \
+    next(); \
+}
+
 
 Parser::Parser(class IStream* input)
   : lexer(input)
@@ -34,12 +45,23 @@ Node* Parser::pProgam()
 {
   Node* parent = NULL;
 
+  parent = pStatements();
+
+  return parent;
+}
+
+Node* Parser::pStatements()
+{
+  Node* parent = NULL;
+
   try
   {
-    while( !accept(T_EOF) )
+    while( true )
     {
-      Node* child = new Node(N_EXPRESSION, pExpression());
-      parent = (parent) ? new Node(N_GLUE, parent, child) : child ;
+      Node* statement = pStatement();
+      if( !statement ) break;
+
+      parent = (parent) ? new Node(N_GLUE, parent, statement) : statement;
     }
   }
   catch( ... )
@@ -49,6 +71,90 @@ Node* Parser::pProgam()
   }
 
   return parent;
+}
+
+Node* Parser::pStatement()
+{
+  if( ACCEPT(T_IF) )
+  {
+    return pIfStatement();
+  }
+  else if( ACCEPT(T_LBRACE) )
+  {
+    return pBlockStatement();
+  }
+  else if( isExpression() )
+  {
+    return pExpressionStatement();
+  }
+
+  return NULL;
+}
+
+Node* Parser::pExpressionStatement()
+{
+  Node* expression = NULL;
+  
+  
+  try
+  {
+    expression = pExpression();
+    EXPECT(T_SEMICOLON, ";");
+  }
+  catch( ... )
+  {
+    SAFE_DELETE(expression);
+    throw;
+  }
+
+  return expression;
+}
+
+Node* Parser::pBlockStatement()
+{
+  Node* parent = NULL;
+
+  try
+  {
+    parent = pStatements();
+    EXPECT(T_RBRACE, "}");
+  }
+  catch( ... )
+  {
+    SAFE_DELETE(parent);
+    throw;
+  }
+
+  return parent;
+}
+
+Node* Parser::pIfStatement()
+{
+  Node* condition = NULL;
+  Node* onTrue    = NULL;
+  Node* onFalse   = NULL;
+
+  try
+  {
+    EXPECT(T_LPREN, "(");
+    condition = pExpression();
+    EXPECT(T_RPREN, ")");
+    
+    onTrue = pStatement();
+
+    if( ACCEPT(T_ELSE) )
+      onFalse = pStatement();
+
+  }
+  catch( ... )
+  {
+    SAFE_DELETE(condition);
+    SAFE_DELETE(onTrue);
+    SAFE_DELETE(onFalse);
+    throw;
+  }
+
+  return new Node(N_IF, condition, onTrue, onFalse);
 }
 
 Node* Parser::pExpression()
@@ -121,117 +227,70 @@ Node* Parser::pFactor()
 {
   Node* n = NULL;
 
-  if( ACCEPT(T_NUMBER, T_BIN_NUMBER, T_HEX_NUMBER, T_OCT_NUMBER) )
+  switch( TYPE )
   {
-    n = new Node(N_N_LITERAL);
-    n->setToken(*token);
-    next();
-  }
-  else if( TYPE==T_LPREN )
-  {
-    next();
-    n = pExpression();
-    if( TYPE!=T_RPREN )
+    case T_NUMBER:
+    case T_BIN_NUMBER:
+    case T_HEX_NUMBER:
+    case T_OCT_NUMBER:
     {
-      SAFE_DELETE(n);
-      throw EXCEPTION("(%d:%d) Missing closing paren", token->getLine(), token->getColumn());
+      n = new Node(N_N_LITERAL);
+      n->setToken(*token);
+      next();
+      break;
     }
-    next();
-  }
-  else
-  {
-    throw EXCEPTION("(%d:%d) Unexpected input", token->getLine(), token->getColumn());
+
+    case T_IDENT:
+    {
+      n = new Node(N_IDENT);
+      n->setToken(*token);
+      next();
+      break;
+    }
+
+    case T_LPREN:
+    {
+      next();
+      n = pExpression();
+      if( TYPE!=T_RPREN )
+      {
+        SAFE_DELETE(n);
+        throw EXCEPTION("(%d:%d) Missing closing paren", token->getLine(), token->getColumn());
+      }
+      next();
+      break;
+    }
+
+    default:
+    {
+      throw EXCEPTION("(%d:%d) Unexpected input", token->getLine(), token->getColumn());
+    }
   }
 
   return n;
 }
 
-/*
-Node* Parser::pExpression()
+bool Parser::isExpression()
 {
-  Node* parent = new Node(N_EXPRESSION);
-
-  if( TYPE==T_PLUS || TYPE==T_MINUS )
+  switch( TYPE )
   {
-    printf("+/-\n");
-    next();
+    case T_NUMBER:
+    case T_BIN_NUMBER:
+    case T_HEX_NUMBER:
+    case T_OCT_NUMBER:
+    case T_LPREN:
+    case T_IDENT:
+      return true;
+
+    default: return false;
   }
-
-  pTerm();
-
-  while( TYPE==T_PLUS || TYPE==T_MINUS )
-  {
-    printf("+/-\n");
-    next();
-    pTerm();
-  }
-}
-
-Node* Parser::pTerm()
-{
-  pFactor();
-  while( TYPE==T_MUL || TYPE==T_DIV )
-  {
-    printf("* / \\\n");
-    next();
-    pFactor();
-  }
-}
-
-Node* Parser::pFactor()
-{
-  if( ACCEPT(T_NUMBER, T_BIN_NUMBER, T_HEX_NUMBER, T_OCT_NUMBER) )
-  {
-    printf("number [%s]\n", token->getText());
-    next();
-  }
-  else if( TYPE==T_LPREN )
-  {
-    pExpression();
-    if( TYPE!=T_RPREN )
-      throw EXCEPTION("(%d:%d) Missing closing paren", token->getLine(), token->getColumn());
-  }
-  else
-  {
-    throw EXCEPTION("(%d:%d) Unexpected input", token->getLine(), token->getColumn());
-  }
-}
-*/
-
-
-
-int Parser::acceptMany(const Tokens type, ...)
-{
-  va_list args;
-
-  const Tokens compare = token->getType();
-  if( compare==type )
-    return 1;
-
-  int returnValue = 0;
-  va_start(args, type);
-  for( ;; )
-  {
-    const Tokens t = va_arg(args, const Tokens);
-    if( t==compare )
-    {
-      returnValue = 1;
-      break;
-    }
-    else if( t==-1 )
-    {
-      break;
-    }
-  }
-  va_end(args);
-
-  return returnValue;
 }
 
 int Parser::accept(const Tokens type)
 {
-  if( token->getType()==type )
+  if( type==this->type )
   {
+    next();
     return 1;
   }
 

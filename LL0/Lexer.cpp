@@ -93,6 +93,8 @@ lex_start:
 
     case '(': lexReadNext(); return T_LPREN;
     case ')': lexReadNext(); return T_RPREN;
+    case '{': lexReadNext(); return T_LBRACE;
+    case '}': lexReadNext(); return T_RBRACE;
     case ';': lexReadNext(); return T_SEMICOLON;
     case '.': lexReadNext(); return T_DOT;
     case -1: return T_EOF;
@@ -101,11 +103,82 @@ lex_start:
     {
       if( isDigit(c) )
         return lexReadNumber();
+      if( isAlpha(c) )
+        return lexReadLiteral();
 
       throw EXCEPTION("Lexer: unexpected input at %d:%d", lineNumber, columnNumber);
     }
   }
+}
 
+Tokens Lexer::lexReadLiteral()
+{
+  tokenRaw.push(c);
+  lexReadNext();
+
+  while( isAlpha(c) || isDigit(c) || c=='_' )
+  {
+    tokenRaw.push(c);
+    lexReadNext();
+  }
+
+  #define COMPARE(x)  (tokenRaw.compare(x))
+  const char first = tokenRaw.toString()[0];
+  Tokens type = T_IDENT;
+  
+  switch( first )
+  {
+    case 'e':
+    {
+      if( COMPARE("else") )
+        type = T_ELSE;
+      break;
+    }
+
+    case 'f':
+    {
+      if( COMPARE("false") )
+        type = T_FALSE;
+      else if( COMPARE("for") )
+        type = T_FOR;
+      break;
+    }
+
+    case 'i':
+    {
+      if( COMPARE("if") )
+        type = T_IF;
+      break;
+    }
+
+    case 'r':
+    {
+      if( COMPARE("return") )
+        type = T_RETURN;
+      break;
+    }
+
+    case 't':
+    {
+      if( COMPARE("true") )
+        type = T_TRUE;
+       break;
+    }
+
+    case 'w':
+    {
+      if( COMPARE("while") )
+        type = T_WHILE;
+      break;
+    }
+
+    default: break;
+  }
+
+  if( type!=T_IDENT )
+    tokenRaw.clear();
+
+  return type;
 }
 
 void Lexer::lexNewLine()
