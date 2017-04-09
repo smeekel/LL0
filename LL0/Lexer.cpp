@@ -58,6 +58,8 @@ lex_start:
   {
     case '\t': case '\v':
     case ' ':  case '\r':
+    case '\x0C': //form feed
+    case '\x85': //next line
     {
       lexReadNext();
       goto lex_start;
@@ -87,17 +89,20 @@ lex_start:
       }
     }
 
-    case '+': lexReadNext(); return T_PLUS;
-    case '-': lexReadNext(); return T_MINUS;
-    case '*': lexReadNext(); return T_MUL;
-
-    case '(': lexReadNext(); return T_LPREN;
-    case ')': lexReadNext(); return T_RPREN;
-    case '{': lexReadNext(); return T_LBRACE;
-    case '}': lexReadNext(); return T_RBRACE;
-    case ';': lexReadNext(); return T_SEMICOLON;
-    case '.': lexReadNext(); return T_DOT;
-    case -1: return T_EOF;
+    #define SINGLE(x, t) case x: lexReadNext(); return t ;
+    SINGLE('+', T_PLUS);
+    SINGLE('-', T_MINUS);
+    SINGLE('*', T_MUL);
+    SINGLE('%', T_MOD);
+    SINGLE('(', T_LPREN);
+    SINGLE(')', T_RPREN);
+    SINGLE('{', T_LBRACE);
+    SINGLE('}', T_RBRACE);
+    SINGLE(';', T_SEMICOLON);
+    SINGLE('.', T_DOT);
+    SINGLE(',', T_COMMA);
+    SINGLE(-1, T_EOF);
+    #undef SINGLE
 
     default:
     {
@@ -141,6 +146,8 @@ Tokens Lexer::lexReadLiteral()
         type = T_FALSE;
       else if( COMPARE("for") )
         type = T_FOR;
+      else if( COMPARE("fn") )
+        type = T_FUNCTION;
       break;
     }
 

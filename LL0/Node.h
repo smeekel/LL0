@@ -12,6 +12,8 @@ namespace LL0
 
     N_N_LITERAL,
     N_IDENT,
+    N_ANONYMOUS,
+    N_FUNCTION,
 
     N_PLUS,
     N_MINUS,
@@ -30,12 +32,17 @@ namespace LL0
       CASE(N_GLUE)
       CASE(N_EXPRESSION)
       CASE(N_N_LITERAL)
+      CASE(N_IDENT)
+      CASE(N_ANONYMOUS)
+      CASE(N_FUNCTION)
       CASE(N_PLUS)
       CASE(N_MINUS)
       CASE(N_MUL)
       CASE(N_DIV)
       CASE(N_IF)
-      default: return "*UNKNOWN*";
+      default: 
+        printf("Unknown node [%d]\n", type);
+        return "*UNKNOWN*";
     }
   }
   #undef CASE

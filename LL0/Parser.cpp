@@ -19,6 +19,8 @@ using namespace LL0;
     next(); \
 }
 
+#define PARSE_EXCEPTION(message, ...) EXCEPTION("(%d:%d) " message, token->getLine(), token->getColumn(), __VA_ARGS__)
+
 
 Parser::Parser(class IStream* input)
   : lexer(input)
@@ -79,6 +81,10 @@ Node* Parser::pStatement()
   {
     return pIfStatement();
   }
+  else if( ACCEPT(T_FUNCTION) )
+  {
+    return pFunction();
+  }
   else if( ACCEPT(T_LBRACE) )
   {
     return pBlockStatement();
@@ -118,6 +124,80 @@ Node* Parser::pBlockStatement()
   {
     parent = pStatements();
     EXPECT(T_RBRACE, "}");
+  }
+  catch( ... )
+  {
+    SAFE_DELETE(parent);
+    throw;
+  }
+
+  return parent;
+}
+
+Node* Parser::pFunction()
+{
+  Node* name    = NULL;
+  Node* params  = NULL;
+  Node* body    = NULL;
+
+  try
+  {
+    if( TYPE==T_IDENT )
+    {
+      name = new Node(N_IDENT);
+      name->setToken(*token);
+      next();
+    }
+    else
+    {
+      name = new Node(N_ANONYMOUS);
+    }
+
+    EXPECT(T_LPREN, "(");
+    params = pParameterDefinition();
+    
+    EXPECT(T_LBRACE, "{");
+    body = pBlockStatement();
+    
+  }
+  catch( ... )
+  {
+    SAFE_DELETE(name);
+    SAFE_DELETE(params);
+    SAFE_DELETE(body);
+    throw;
+  }
+
+  return new Node(N_FUNCTION, name, params, body);
+}
+
+
+Node* Parser::pParameterDefinition()
+{
+  Node* parent = NULL;
+
+  try
+  {
+    while( true )
+    {
+      if( TYPE==T_IDENT )
+      {
+        Node* ident = new Node(N_IDENT);
+        ident->setToken(*token);
+        parent = parent ? new Node(N_GLUE, parent, ident) : ident ;
+        next();
+
+        ACCEPT(T_COMMA);
+      }
+      else if( ACCEPT(T_RPREN) )
+      {
+        break;
+      }
+      else
+      {
+        throw PARSE_EXCEPTION("Syntax error in parameter definition");
+      }
+    }
   }
   catch( ... )
   {

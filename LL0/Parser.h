@@ -26,6 +26,8 @@ namespace LL0
     Node*   pStatements           ();
     Node*   pStatement            ();
     Node*   pIfStatement          ();
+    Node*   pFunction             ();
+    Node*   pParameterDefinition  ();
     Node*   pBlockStatement       ();
     Node*   pExpressionStatement  ();
     Node*   pExpression           ();
