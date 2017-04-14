@@ -1,21 +1,24 @@
 #include <cstdio>
-#include "Parser.h"
-#include "Lexer.h"
 #include "Exception.h"
 #include "IStreamFile.h"
-#include "Tokens.h"
-#include "Utility.h"
+#include "Parser.h"
+#include "IRGenerator.h"
 
 using namespace LL0;
 
 
 void main()
 {
-  Parser parser(new IStreamFile("testcases/test2.txt"));
 
   try
   {
-    parser.test();
+    Parser      parser(new IStreamFile("testcases/test2.txt"));
+    SafeNode    parseTree;
+    IRGenerator irgen;
+
+    parseTree = parser.generate();
+    irgen.generate(parseTree);
+
   }
   catch( const Exception& e )
   {
@@ -23,4 +26,5 @@ void main()
     std::printf("exception [%s]\n", e.getMessage());
   }
 
+  std::getchar();
 }

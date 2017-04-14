@@ -58,6 +58,10 @@ namespace LL0
     T_TRUE,
     T_FALSE,
     T_FUNCTION,
+    T_VAR,
+    T_IMPORT,
+    T_INTO,
+    T_CONST,
   };
 
   class Token

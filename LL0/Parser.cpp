@@ -33,13 +33,9 @@ Parser::~Parser()
 }
 
 
-void Parser::test()
+SafeNode Parser::generate()
 {
-  Node* root = pProgam();
-  
-  root->print();
-
-  return;
+  return SafeNode( pProgam() );
 }
 
 
@@ -85,6 +81,20 @@ Node* Parser::pStatement()
   {
     return pFunction();
   }
+  else if( ACCEPT(T_RETURN) )
+  {
+    return pReturnStatement();
+  }
+  /*
+  else if( ACCEPT(T_IMPORT) )
+  {
+    return p
+  }
+  */
+  else if( ACCEPT(T_VAR) )
+  {
+    return pVariableDefinition();
+  }
   else if( ACCEPT(T_LBRACE) )
   {
     return pBlockStatement();
@@ -104,7 +114,7 @@ Node* Parser::pExpressionStatement()
   
   try
   {
-    expression = pExpression();
+    expression = pAssignmentExpression();
     EXPECT(T_SEMICOLON, ";");
   }
   catch( ... )
@@ -132,6 +142,54 @@ Node* Parser::pBlockStatement()
   }
 
   return parent;
+}
+
+Node* Parser::pReturnStatement()
+{
+  Node* expression = NULL;
+
+  try
+  {
+    expression = pAssignmentExpression();
+    EXPECT(T_SEMICOLON, ";");
+  }
+  catch( ... )
+  {
+    SAFE_DELETE(expression);
+    throw;
+  }
+
+  return new Node(N_RETURN, expression);
+}
+
+Node* Parser::pVariableDefinition()
+{
+  Node* name        = NULL;
+  Node* expression  = NULL;
+
+  try
+  {
+    if( TYPE!=T_IDENT )
+      throw PARSE_EXCEPTION("Expected variable name");
+    name = new Node(N_IDENT);
+    name->setToken(*token);
+    next();
+
+    if( ACCEPT(T_ASSIGNMENT) )
+    {
+      expression = pExpression();
+    }
+
+    EXPECT(T_SEMICOLON, ';');
+  }
+  catch( ... )
+  {
+    SAFE_DELETE(name);
+    SAFE_DELETE(expression);
+    throw;
+  }
+
+  return new Node(N_VAR, name, expression);
 }
 
 Node* Parser::pFunction()
@@ -237,6 +295,27 @@ Node* Parser::pIfStatement()
   return new Node(N_IF, condition, onTrue, onFalse);
 }
 
+Node* Parser::pAssignmentExpression()
+{
+  Node* parent = pExpression();
+
+  try
+  {
+    if( TYPE==T_ASSIGNMENT )
+    {
+      next();
+      parent = new Node(N_ASSIGNMENT, parent, pExpression());
+    }
+  }
+  catch( ... )
+  {
+    SAFE_DELETE(parent);
+    throw;
+  }
+
+  return parent;
+}
+
 Node* Parser::pExpression()
 {
   Node* parent = pTerm();
@@ -331,7 +410,7 @@ Node* Parser::pFactor()
     case T_LPREN:
     {
       next();
-      n = pExpression();
+      n = pAssignmentExpression();
       if( TYPE!=T_RPREN )
       {
         SAFE_DELETE(n);

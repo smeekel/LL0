@@ -1,10 +1,18 @@
 
+var a = 1;
+var b = 3;
+var c = a + b;
+var d = a + b;
+
+/*
 if( 1 )
 {
   1 + 2 * 3;
 }
+*/
 
-
-fn (a,b)
+fn a(a,b)
 {
+  var c = a + b;
+  return c;
 }

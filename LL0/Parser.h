@@ -1,7 +1,8 @@
 #pragma once
-#include <stdint.h>
+#include <cstdint>
 #include "Lexer.h"
 #include "Tokens.h"
+#include "Node.h"
 
 
 namespace LL0
@@ -15,7 +16,7 @@ namespace LL0
     ~Parser ();
 
   public:
-    void test();
+    SafeNode generate();
 
   protected:
     void  next      ();
@@ -27,8 +28,11 @@ namespace LL0
     Node*   pStatement            ();
     Node*   pIfStatement          ();
     Node*   pFunction             ();
+    Node*   pVariableDefinition   ();
     Node*   pParameterDefinition  ();
     Node*   pBlockStatement       ();
+    Node*   pReturnStatement      ();
+    Node*   pAssignmentExpression ();
     Node*   pExpressionStatement  ();
     Node*   pExpression           ();
     Node*   pTerm                 ();

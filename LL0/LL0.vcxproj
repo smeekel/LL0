@@ -140,14 +140,17 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Exception.cpp" />
+    <ClCompile Include="IRGenerator.cpp" />
     <ClCompile Include="IStreamFile.cpp" />
     <ClCompile Include="Lexer.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Node.cpp" />
     <ClCompile Include="Parser.cpp" />
     <ClCompile Include="StringBuffer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Exception.h" />
+    <ClInclude Include="IRGenerator.h" />
     <ClInclude Include="Node.h" />
     <ClInclude Include="StringBuffer.h" />
     <ClInclude Include="IStream.h" />

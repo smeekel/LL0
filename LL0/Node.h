@@ -1,5 +1,7 @@
 #pragma once
+#include <memory>
 #include "Utility.h"
+#include "Tokens.h"
 
 
 namespace LL0
@@ -14,6 +16,10 @@ namespace LL0
     N_IDENT,
     N_ANONYMOUS,
     N_FUNCTION,
+    N_VAR,
+    N_RETURN,
+
+    N_ASSIGNMENT,
 
     N_PLUS,
     N_MINUS,
@@ -24,63 +30,24 @@ namespace LL0
   };
 
 
-  #define CASE(X) case X : return #X ;
-  const char* nodeTypeToString(const NodeTypes type)
-  {
-    switch( type )
-    {
-      CASE(N_GLUE)
-      CASE(N_EXPRESSION)
-      CASE(N_N_LITERAL)
-      CASE(N_IDENT)
-      CASE(N_ANONYMOUS)
-      CASE(N_FUNCTION)
-      CASE(N_PLUS)
-      CASE(N_MINUS)
-      CASE(N_MUL)
-      CASE(N_DIV)
-      CASE(N_IF)
-      default: 
-        printf("Unknown node [%d]\n", type);
-        return "*UNKNOWN*";
-    }
-  }
-  #undef CASE
-
+  const char* nodeTypeToString(const NodeTypes type);
 
   class Node
   {
   public:
-    Node(const NodeTypes type, Node* A=NULL, Node* B=NULL, Node* C=NULL)
-    {
-      this->type  = type;
-      this->A     = A;
-      this->B     = B;
-      this->C     = C;
-    }
-    ~Node()
-    {
-      SAFE_DELETE(A);
-      SAFE_DELETE(B);
-      SAFE_DELETE(C);
-    }
+    Node(const NodeTypes type, Node* A=NULL, Node* B=NULL, Node* C=NULL);
+    ~Node();
 
   public:
-    void print(const int index=0)
-    {
-      printf("%*s%s", index*2, "", nodeTypeToString(type));
-      if( type==N_N_LITERAL )
-        printf(" [%s] ", token.getText());
-      printf("\n");
-      if( A ) A->print(index+1);
-      if( B ) B->print(index+1);
-      if( C ) C->print(index+1);
-    }
+    void print    (const int index=0);
+    void setToken (const Token& other);
 
-    void setToken(const Token& other)
-    {
-      this->token = other;
-    }
+    bool        is      (NodeTypes compareType) const { return type==compareType; }
+    NodeTypes   getType () const { return type; }
+    const char* getRaw  () const { return token.getText(); }
+    const Node* getA    () const { return A; }
+    const Node* getB    () const { return B; }
+    const Node* getC    () const { return C; }
 
   protected:
     NodeTypes type;
@@ -91,5 +58,6 @@ namespace LL0
 
   };
 
+  using SafeNode = std::shared_ptr<Node>;
 
 }

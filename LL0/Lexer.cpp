@@ -101,6 +101,7 @@ lex_start:
     SINGLE(';', T_SEMICOLON);
     SINGLE('.', T_DOT);
     SINGLE(',', T_COMMA);
+    SINGLE('=', T_ASSIGNMENT);
     SINGLE(-1, T_EOF);
     #undef SINGLE
 
@@ -155,6 +156,10 @@ Tokens Lexer::lexReadLiteral()
     {
       if( COMPARE("if") )
         type = T_IF;
+      else if( COMPARE("import") )
+        type = T_IMPORT;
+      else if( COMPARE("into") )
+        type = T_INTO;
       break;
     }
 
@@ -170,6 +175,13 @@ Tokens Lexer::lexReadLiteral()
       if( COMPARE("true") )
         type = T_TRUE;
        break;
+    }
+
+    case 'v':
+    {
+      if( COMPARE("var") )
+        type = T_VAR;
+      break;
     }
 
     case 'w':
