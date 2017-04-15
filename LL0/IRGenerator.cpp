@@ -16,21 +16,11 @@ IRGenerator::~IRGenerator()
 
 void IRGenerator::generate(SafeNode parseTree)
 {
-  //parseTree->print();
-
-  symbolTable.clear();
-
-  varIndex = 0;
-
   printf(".MODULE\n");
 
   gBlock(parseTree.get());
 
   printf("\n");
-  for( auto i=symbolTable.begin() ; i!=symbolTable.end() ; i++ )
-  {
-    printf(".VAR [%s] -> $%i\n", i->second.name.c_str(), i->second.temp);
-  }
 }
 
 void IRGenerator::gBlock(const Node* n)
@@ -62,10 +52,33 @@ void IRGenerator::gFunction(const Node* n)
   const Node* params  = n->getB();
   const Node* body    = n->getC();
 
+  ir.sym.scopePush();
   printf("@%s:\n", ident->getRaw());
+  
+  int temp = 0;
+  gFunctionPushParams(params, temp);
+
   gBlock(body);
   printf("  RET\n");
 
+  ir.sym.scopePop();
+}
+
+void IRGenerator::gFunctionPushParams(const Node* n, int& index)
+{
+  if( n->is(N_GLUE) )
+  {
+    gFunctionPushParams(n->getA(), index);
+    gFunctionPushParams(n->getB(), index);
+  }
+  else
+  {
+    Symbol param = ir.sym.newSymbol(n->getRaw());
+    if( param.isNull() )
+      throw IR_EXCEPTION("Duplicate parameter name [%s]", n->getRaw());
+
+    printf("  SMOV %i, $%i\n", index++, param.vindex);
+  }
 }
 
 void IRGenerator::gReturn(const Node* n)
@@ -83,15 +96,13 @@ void IRGenerator::gReturn(const Node* n)
     printf("  RET\n");
   }
 
-  //const int temp = gEval;
-
 }
 
 void IRGenerator::gVar(const Node* n)
 {
   const Node*   ident       = n->getA();
   const Node*   expression  = n->getB();
-  const Symbol  sym         = newSymbol(ident->getRaw());
+  const Symbol  sym         = ir.sym.newSymbol(ident->getRaw());
 
   if( sym.isNull() )
     throw IR_EXCEPTION("Duplicate variable name [%s]", ident->getRaw());
@@ -99,7 +110,7 @@ void IRGenerator::gVar(const Node* n)
   if( expression )
   {
     int temp = gEval(expression);
-    printf("  MOV $%i, $%i\n", temp, sym.getTemp());
+    printf("  MOV $%i, $%i\n", temp, sym.vindex);
   }
 }
 
@@ -132,20 +143,20 @@ int IRGenerator::gAssignment(const Node* n)
   if( !lparam->is(N_IDENT) )
     throw IR_EXCEPTION("Invalid lparam. Must be identifier");
   
-  const Symbol sym = findSymbol(lparam->getRaw());
+  const Symbol sym = ir.sym.findSymbol(lparam->getRaw());
   if( sym.isNull() )
     throw IR_EXCEPTION("Undefined variable [%s]", lparam->getRaw());
 
   const int expr_temp = gEval(rparam);
-  printf("  MOV $%i, $%i\n", expr_temp, sym.temp);
+  printf("  MOV $%i, $%i\n", expr_temp, sym.vindex);
 
-  return sym.temp;
+  return sym.vindex;
 }
 
 int IRGenerator::gCall(const Node* n)
 {
   const Node* name = n->getA();
-  const int   temp = ++varIndex;
+  const int   temp = ir.newVirtualIndex();
 
   if( !name->is(N_IDENT) )
     throw EXCEPTION("Compiler error: N_CALL/A != N_IDENT");
@@ -181,7 +192,7 @@ int IRGenerator::gIf(const Node* n)
   const Node* onFalse   = n->getC();
 
   const int expTemp     = gEval(condition);
-  const int labelFalse  = ++varIndex;
+  const int labelFalse  = ir.newVirtualIndex();
   printf("  JMPF @L%i <$%i>\n", labelFalse, expTemp);
 
   gBlock(onTrue);
@@ -192,7 +203,7 @@ int IRGenerator::gIf(const Node* n)
   }
   else
   {
-    const int labelExit = ++varIndex;
+    const int labelExit = ir.newVirtualIndex();
     printf("  JMP @L%i\n", labelExit);
     printf("@L%i:\n", expTemp);
 
@@ -206,24 +217,24 @@ int IRGenerator::gIf(const Node* n)
 
 int IRGenerator::gLiteral(const Node* n)
 {
-  const int temp = ++varIndex;
+  const int temp = ir.newVirtualIndex();
   printf("  LOADK n %s, $%i\n", n->getRaw(), temp);
   return temp;
 }
 
 int IRGenerator::gIdent(const Node* n)
 {
-  const Symbol s = findSymbol(n->getRaw());
+  const Symbol s = ir.sym.findSymbol(n->getRaw());
     
   if( s.isNull() )
     throw IR_EXCEPTION("Unknown variable [%s]", n->getRaw());
 
-  return s.getTemp();
+  return s.vindex;
 }
 
 int IRGenerator::gPlus(const Node* n)
 {
-  const int temp = ++varIndex;
+  const int temp = ir.newVirtualIndex();
   const int a = gEval(n->getA());
   const int b = gEval(n->getB());
 
@@ -234,7 +245,7 @@ int IRGenerator::gPlus(const Node* n)
 
 int IRGenerator::gMinus(const Node* n)
 {
-  const int temp = ++varIndex;
+  const int temp = ir.newVirtualIndex();
   const int a = gEval(n->getA());
   const int b = gEval(n->getB());
 
@@ -245,7 +256,7 @@ int IRGenerator::gMinus(const Node* n)
 
 int IRGenerator::gMul(const Node* n)
 {
-  const int temp = ++varIndex;
+  const int temp = ir.newVirtualIndex();
   const int a = gEval(n->getA());
   const int b = gEval(n->getB());
 
@@ -256,7 +267,7 @@ int IRGenerator::gMul(const Node* n)
 
 int IRGenerator::gDiv(const Node* n)
 {
-  const int temp = ++varIndex;
+  const int temp = ir.newVirtualIndex();
   const int a = gEval(n->getA());
   const int b = gEval(n->getB());
 
@@ -281,24 +292,3 @@ int IRGenerator::countParameters(const Node* n)
   }
 }
 
-IRGenerator::Symbol IRGenerator::newSymbol(const char* name)
-{
-  Symbol s;
-
-  if( !findSymbol(name).isNull() )
-    return Symbol::null();
-
-  s.name  = name;
-  s.temp  = ++varIndex;
-  symbolTable.insert(SymbolPair(s.name, s));
-
-  return s;
-}
-
-IRGenerator::Symbol IRGenerator::findSymbol(const char* name)
-{
-  std::string key(name);
-  auto i = symbolTable.find(key);
-
-  return ( i!=symbolTable.end() ) ? i->second : Symbol::null() ;
-}

@@ -37,10 +37,13 @@ const char* LL0::nodeTypeToString(const NodeTypes type)
 
 Node::Node(const NodeTypes type, Node* A, Node* B, Node* C)
 {
-  this->type  = type;
-  this->A     = A;
-  this->B     = B;
-  this->C     = C;
+  this->type    = type;
+  this->A       = A;
+  this->B       = B;
+  this->C       = C;
+
+  this->line    = 0;
+  this->column  = 0;
 }
 
 Node::~Node()

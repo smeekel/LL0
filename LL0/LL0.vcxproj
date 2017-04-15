@@ -141,22 +141,27 @@
   <ItemGroup>
     <ClCompile Include="Exception.cpp" />
     <ClCompile Include="IRGenerator.cpp" />
+    <ClCompile Include="IRModule.cpp" />
     <ClCompile Include="IStreamFile.cpp" />
     <ClCompile Include="Lexer.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Node.cpp" />
     <ClCompile Include="Parser.cpp" />
     <ClCompile Include="StringBuffer.cpp" />
+    <ClCompile Include="SymbolTable.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Exception.h" />
     <ClInclude Include="IRGenerator.h" />
+    <ClInclude Include="IRModule.h" />
     <ClInclude Include="Node.h" />
     <ClInclude Include="StringBuffer.h" />
     <ClInclude Include="IStream.h" />
     <ClInclude Include="IStreamFile.h" />
     <ClInclude Include="Lexer.h" />
     <ClInclude Include="Parser.h" />
+    <ClInclude Include="Symbol.h" />
+    <ClInclude Include="SymbolTable.h" />
     <ClInclude Include="Tokens.h" />
     <ClInclude Include="Utility.h" />
   </ItemGroup>

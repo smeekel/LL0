@@ -2,6 +2,7 @@
 #include <map>
 #include <string>
 #include "Node.h"
+#include "IRModule.h"
 
 
 namespace LL0
@@ -25,6 +26,7 @@ namespace LL0
     int   gCall               (const Node*);
     int   gIf                 (const Node*);
     void  gFunction           (const Node*);
+    void  gFunctionPushParams (const Node*, int& index);
     void  gReturn             (const Node*);
     
     int   gAssignment         (const Node*);
@@ -36,34 +38,10 @@ namespace LL0
     int   gDiv                (const Node*);
 
   protected:
-    class Symbol
-    {
-    public:
-      Symbol()
-      {
-        temp = 0;
-      }
-
-    public:
-      std::string name;
-      int         temp;
-
-    public:
-      int   getTemp () const { return temp; }
-      bool  isNull  () const { return temp==0; }
-
-      static Symbol null() { return Symbol(); }
-    };
-
-  protected:
-    Symbol  newSymbol       (const char* name);
-    Symbol  findSymbol      (const char* name);
-    int     countParameters (const Node*);
+    int   countParameters     (const Node*);
 
   private:
-    using SymbolPair = std::pair<std::string, Symbol>;
-    std::map<std::string, Symbol> symbolTable;
-    int varIndex;
+    IRModule  ir;
 
   };
 

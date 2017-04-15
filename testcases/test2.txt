@@ -1,4 +1,5 @@
 
+/*
 var a = 1;
 var b = 3;
 var c = a + b;
@@ -16,9 +17,11 @@ else
 {
   1 * 2;
 }
+*/
 
 fn a(a,b)
 {
-  var cc = a + b;
-  return cc;
+  var c = a + b;
+  var c0 = 1;
+  return c;
 }
