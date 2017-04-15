@@ -61,4 +61,11 @@ void Node::print(const int index)
 void Node::setToken(const Token& other)
 {
   this->token = other;
+  setLocation(other);
+}
+
+void Node::setLocation(const Token& t)
+{
+  line    = t.getLine();
+  column  = t.getColumn();
 }

@@ -1,5 +1,6 @@
 #pragma once
 #include <memory>
+#include <cstdint>
 #include "Utility.h"
 #include "Tokens.h"
 
@@ -39,15 +40,18 @@ namespace LL0
     ~Node();
 
   public:
-    void print    (const int index=0);
-    void setToken (const Token& other);
+    void print      (const int index=0);
+    void setToken   (const Token&);
+    void setLocation(const Token&);
 
-    bool        is      (NodeTypes compareType) const { return type==compareType; }
-    NodeTypes   getType () const { return type; }
-    const char* getRaw  () const { return token.getText(); }
-    const Node* getA    () const { return A; }
-    const Node* getB    () const { return B; }
-    const Node* getC    () const { return C; }
+    bool        is        (NodeTypes compareType) const { return type==compareType; }
+    NodeTypes   getType   () const { return type; }
+    const char* getRaw    () const { return token.getText(); }
+    const Node* getA      () const { return A; }
+    const Node* getB      () const { return B; }
+    const Node* getC      () const { return C; }
+    uint32_t    getLine   () const { return line; }
+    uint32_t    getColumn () const { return column; }
 
   protected:
     NodeTypes type;
@@ -56,6 +60,8 @@ namespace LL0
     Node*     B;
     Node*     C;
 
+    uint32_t  line;
+    uint32_t  column;
   };
 
   using SafeNode = std::shared_ptr<Node>;
