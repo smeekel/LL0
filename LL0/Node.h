@@ -12,22 +12,23 @@ namespace LL0
   {
     N_GLUE,
     N_EXPRESSION,
+    N_CALL,
+    N_ANONYMOUS,
+    N_NEXT,
 
     N_N_LITERAL,
     N_IDENT,
-    N_ANONYMOUS,
+
     N_FUNCTION,
     N_VAR,
     N_RETURN,
+    N_IF,
 
     N_ASSIGNMENT,
-
     N_PLUS,
     N_MINUS,
     N_MUL,
     N_DIV,
-
-    N_IF,
   };
 
 

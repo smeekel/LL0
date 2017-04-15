@@ -85,12 +85,6 @@ Node* Parser::pStatement()
   {
     return pReturnStatement();
   }
-  /*
-  else if( ACCEPT(T_IMPORT) )
-  {
-    return p
-  }
-  */
   else if( ACCEPT(T_VAR) )
   {
     return pVariableDefinition();
@@ -297,14 +291,20 @@ Node* Parser::pIfStatement()
 
 Node* Parser::pAssignmentExpression()
 {
-  Node* parent = pExpression();
+  Node* parent = NULL;
 
   try
   {
+    parent = pExpression();
+
     if( TYPE==T_ASSIGNMENT )
     {
       next();
-      parent = new Node(N_ASSIGNMENT, parent, pExpression());
+      return new Node(N_ASSIGNMENT, parent, pExpression());
+    }
+    else
+    {
+      return parent;
     }
   }
   catch( ... )
@@ -312,8 +312,6 @@ Node* Parser::pAssignmentExpression()
     SAFE_DELETE(parent);
     throw;
   }
-
-  return parent;
 }
 
 Node* Parser::pExpression()
@@ -401,9 +399,24 @@ Node* Parser::pFactor()
 
     case T_IDENT:
     {
-      n = new Node(N_IDENT);
-      n->setToken(*token);
-      next();
+      SmartToken peek = lexer.peek();
+
+      if( peek->getType()==T_LPREN )
+      {
+        //
+        // Function call
+        //
+        n = pFunctionCall();
+      }
+      else
+      {
+        //
+        // Variable
+        //
+        n = new Node(N_IDENT);
+        n->setToken(*token);
+        next();
+      }
       break;
     }
 
@@ -428,6 +441,61 @@ Node* Parser::pFactor()
 
   return n;
 }
+
+Node* Parser::pFunctionCall()
+{
+  Node* name = NULL;
+  Node* parameters = NULL;
+
+  try
+  {
+    name = new Node(N_IDENT);
+    name->setToken(*token);
+    next();
+
+    EXPECT(T_LPREN, "(");
+    parameters = pExpressionList();
+    EXPECT(T_RPREN, ")");
+  }
+  catch( ... )
+  {
+    SAFE_DELETE(name);
+    SAFE_DELETE(parameters);
+    throw;
+  }
+
+  return new Node(N_CALL, name, parameters);
+}
+
+Node* Parser::pExpressionList()
+{
+  Node* list = NULL;
+
+  try
+  {
+    while( true )
+    {
+      if( TYPE==T_RPREN )
+      {
+        break;
+      }
+      else if( isExpression() )
+      {
+        Node* expr = pAssignmentExpression();
+        list = list ? new Node(N_NEXT, list, expr) : expr ;
+        ACCEPT(T_COMMA);
+      }
+    }
+  }
+  catch( ... )
+  {
+    SAFE_DELETE(list);
+    throw;
+  }
+
+  return list;
+}
+
 
 bool Parser::isExpression()
 {

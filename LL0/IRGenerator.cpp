@@ -17,6 +17,7 @@ IRGenerator::~IRGenerator()
 void IRGenerator::generate(SafeNode parseTree)
 {
   //parseTree->print();
+
   symbolTable.clear();
 
   varIndex = 0;
@@ -41,7 +42,8 @@ void IRGenerator::gTop(const Node* n)
   }
   else
   {
-    //printf("N=%s\n", nodeTypeToString(n->getType()));
+    int temp = gEval(n);
+    printf("DIS $%i\n", temp); //temp
   }
 }
 
@@ -53,8 +55,6 @@ void IRGenerator::gVar(const Node* n)
 
   if( sym.isNull() )
     throw IR_EXCEPTION("Duplicate variable name [%s]", ident->getRaw());
-
-  //printf(".VAR $%i // %s\n", sym.getTemp(), ident->getRaw());
 
   if( expression )
   {
@@ -120,12 +120,58 @@ int IRGenerator::gEval(const Node* n)
 
     return temp;
   }
+  else if( n->is(N_CALL) )
+  {
+    const Node* name = n->getA();
+    if( !name->is(N_IDENT) )
+      throw EXCEPTION("Compiler error: N_CALL/A != N_IDENT");
+
+    const int count = countParameters(n->getB());
+    
+    gPushCallParameters(n->getB());
+    printf("CALL \"%s\", %d\n", name->getRaw(), count);
+
+    if( count>0 )
+      printf("POP %d\n", count);
+
+  }
   else
   {
-    printf("EVAL=%s\n", nodeTypeToString(n->getType()));
+    printf("> UN=%s\n", nodeTypeToString(n->getType()));
   }
   
   return 0;
+}
+
+void IRGenerator::gPushCallParameters(const Node* n)
+{
+  if( n->is(N_NEXT) )
+  {
+    gPushCallParameters(n->getA());
+    gPushCallParameters(n->getB());
+  }
+  else
+  {
+    const int temp = gEval(n);
+    printf("PUSH $%i\n", temp);
+  }
+}
+
+
+int IRGenerator::countParameters(const Node* n)
+{
+  if( n->is(N_NEXT) )
+  {
+    return 
+      countParameters(n->getA())
+      +
+      countParameters(n->getB())
+      ;
+  }
+  else
+  {
+    return 1;
+  }
 }
 
 IRGenerator::Symbol IRGenerator::newSymbol(const char* name)

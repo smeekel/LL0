@@ -17,10 +17,11 @@ namespace LL0
     void generate(SafeNode parseTree);
 
   protected:
-    void  gTop    (const Node*);
-    void  gGlue   (const Node*);
-    void  gVar    (const Node*);
-    int   gEval   (const Node*);
+    void  gTop                (const Node*);
+    void  gGlue               (const Node*);
+    void  gVar                (const Node*);
+    int   gEval               (const Node*);
+    void  gPushCallParameters (const Node*);
 
   protected:
     class Symbol
@@ -43,8 +44,9 @@ namespace LL0
     };
 
   protected:
-    Symbol  newSymbol (const char* name);
-    Symbol  findSymbol(const char* name);
+    Symbol  newSymbol       (const char* name);
+    Symbol  findSymbol      (const char* name);
+    int     countParameters (const Node*);
 
   private:
     using SymbolPair = std::pair<std::string, Symbol>;

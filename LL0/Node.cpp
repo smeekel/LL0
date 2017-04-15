@@ -10,6 +10,9 @@ const char* LL0::nodeTypeToString(const NodeTypes type)
   {
     CASE(N_GLUE)
     CASE(N_EXPRESSION)
+    CASE(N_CALL)
+    CASE(N_NEXT)
+
     CASE(N_N_LITERAL)
     CASE(N_IDENT)
     CASE(N_ANONYMOUS)

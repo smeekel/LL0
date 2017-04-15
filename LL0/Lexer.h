@@ -19,6 +19,7 @@ namespace LL0
 
   public:
     SmartToken  next();
+    SmartToken  peek();
 
   public:
     static bool  isDigit    (const char c);
@@ -42,6 +43,7 @@ namespace LL0
     uint32_t        columnNumber;
     StringBuffer    tokenRaw;
 
+    SmartToken      peekToken;
   };
 
 }

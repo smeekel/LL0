@@ -15,7 +15,9 @@ Lexer::Lexer(IStream* input)
   this->input         = input;
   this->lineNumber    = 1;
   this->columnNumber  = 0;
-  lexReadNext();
+  
+  lexReadNext();  // prime the input stream
+  next();         // prime the token look ahead
 }
 
 Lexer::~Lexer()
@@ -28,14 +30,21 @@ SmartToken Lexer::next()
 {
   const Tokens t = lexNext();
 
+  SmartToken toReturn = peekToken;
   SmartToken token(new Token());
 
   token->type   = t;
   token->line   = lineNumber;
   token->column = columnNumber;
   token->text   = tokenRaw;
+  peekToken = token;
 
-  return token;
+  return toReturn;
+}
+
+SmartToken Lexer::peek()
+{
+  return peekToken;
 }
 
 bool Lexer::lexReadNext()

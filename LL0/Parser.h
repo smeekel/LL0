@@ -35,8 +35,10 @@ namespace LL0
     Node*   pAssignmentExpression ();
     Node*   pExpressionStatement  ();
     Node*   pExpression           ();
+    Node*   pExpressionList       ();
     Node*   pTerm                 ();
     Node*   pFactor               ();
+    Node*   pFunctionCall         ();
 
     bool    isExpression          ();
 
