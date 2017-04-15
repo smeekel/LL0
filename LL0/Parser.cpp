@@ -270,9 +270,10 @@ Node* Parser::pIfStatement()
 
   try
   {
-    EXPECT(T_LPREN, "(");
+    bool hasParam = ACCEPT(T_LPREN);
     condition = pExpression();
-    EXPECT(T_RPREN, ")");
+
+    if( hasParam ) EXPECT(T_RPREN, ")");
     
     onTrue = pStatement();
 

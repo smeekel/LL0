@@ -22,7 +22,7 @@ void IRGenerator::generate(SafeNode parseTree)
 
   varIndex = 0;
 
-  printf(".START\n");
+  printf(".MODULE\n");
 
   gBlock(parseTree.get());
 
