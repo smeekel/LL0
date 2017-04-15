@@ -17,11 +17,23 @@ namespace LL0
     void generate(SafeNode parseTree);
 
   protected:
-    void  gTop                (const Node*);
+    void  gBlock              (const Node*);
     void  gGlue               (const Node*);
     void  gVar                (const Node*);
     int   gEval               (const Node*);
     void  gPushCallParameters (const Node*);
+    int   gCall               (const Node*);
+    int   gIf                 (const Node*);
+    void  gFunction           (const Node*);
+    void  gReturn             (const Node*);
+    
+    int   gAssignment         (const Node*);
+    int   gLiteral            (const Node*);
+    int   gIdent              (const Node*);
+    int   gPlus               (const Node*);
+    int   gMinus              (const Node*);
+    int   gMul                (const Node*);
+    int   gDiv                (const Node*);
 
   protected:
     class Symbol
@@ -52,6 +64,7 @@ namespace LL0
     using SymbolPair = std::pair<std::string, Symbol>;
     std::map<std::string, Symbol> symbolTable;
     int varIndex;
+
   };
 
 }

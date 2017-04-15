@@ -144,7 +144,9 @@ Node* Parser::pReturnStatement()
 
   try
   {
-    expression = pAssignmentExpression();
+    if( isExpression() )
+      expression = pAssignmentExpression();
+
     EXPECT(T_SEMICOLON, ";");
   }
   catch( ... )
