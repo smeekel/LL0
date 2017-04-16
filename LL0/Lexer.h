@@ -1,49 +1,19 @@
 #pragma once
-#include <cstdint>
-#include <memory>
-#include "StringBuffer.h"
-#include "exception.h"
-#include "Tokens.h"
+#include "types.h"
+#include "errstate.h"
 
 
-namespace LL0
+typedef struct
 {
+  ErrState errorState;
 
-  using SmartToken = std::shared_ptr<Token>;
+} LexerState;
 
-  class Lexer
-  {
-  public:
-    Lexer(class IStream* input);
-    ~Lexer();
+typedef LexerState* const PLexer;
 
-  public:
-    SmartToken  next();
-    SmartToken  peek();
 
-  public:
-    static bool  isDigit    (const char c);
-    static bool  isHexDigit (const char c);
-    static bool  isAlpha    (const char c);
+int   lexer_Initialize  (PLexer);
+int   lexer_Terminate   (PLexer);
+int   lexer_Peek        (PLexer);
+int   lexer_Next        (PLexer);
 
-  protected:
-    Tokens  lexNext         ();
-    bool    lexReadNext     ();
-    void    lexEatComment   ();
-    void    lexNewLine      ();
-    Tokens  lexReadNumber   ();
-    void    lexBinaryNumber ();
-    void    lexHexNumber    ();
-    Tokens  lexReadLiteral  ();
-
-  private:
-    class IStream*  input;
-    int             c;
-    uint32_t        lineNumber;
-    uint32_t        columnNumber;
-    StringBuffer    tokenRaw;
-
-    SmartToken      peekToken;
-  };
-
-}
