@@ -89,6 +89,10 @@ Node* Parser::pStatement()
   {
     return pVariableDefinition();
   }
+  else if( ACCEPT(T_FOR) )
+  {
+    return pForStatement();
+  }
   else if( ACCEPT(T_LBRACE) )
   {
     return pBlockStatement();
@@ -290,6 +294,36 @@ Node* Parser::pIfStatement()
   }
 
   return new Node(N_IF, condition, onTrue, onFalse);
+}
+
+Node* Parser::pForStatement()
+{
+  Node* setup     = NULL;
+  Node* condition = NULL;
+  Node* each      = NULL;
+  Node* body      = NULL;
+
+  try
+  {
+    setup = pAssignmentExpression();
+    EXPECT(T_SEMICOLON, ';');
+    condition = pAssignmentExpression();
+    EXPECT(T_SEMICOLON, ';');
+    each = pAssignmentExpression();
+
+    body = pStatement();
+  }
+  catch( ... )
+  {
+    SAFE_DELETE(setup);
+    SAFE_DELETE(condition);
+    SAFE_DELETE(each);
+    SAFE_DELETE(body);
+
+    throw;
+  }
+
+  return new Node(N_BLOCK, setup, new Node(N_FOR, condition, each, body));
 }
 
 Node* Parser::pAssignmentExpression()

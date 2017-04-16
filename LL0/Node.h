@@ -11,6 +11,7 @@ namespace LL0
   enum NodeTypes
   {
     N_GLUE,
+    N_BLOCK,
     N_EXPRESSION,
     N_CALL,
     N_ANONYMOUS,
@@ -23,6 +24,7 @@ namespace LL0
     N_VAR,
     N_RETURN,
     N_IF,
+    N_FOR,
 
     N_ASSIGNMENT,
     N_PLUS,

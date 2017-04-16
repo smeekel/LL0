@@ -154,6 +154,7 @@
     <ClInclude Include="Exception.h" />
     <ClInclude Include="IRGenerator.h" />
     <ClInclude Include="IRModule.h" />
+    <ClInclude Include="IROp.h" />
     <ClInclude Include="Node.h" />
     <ClInclude Include="StringBuffer.h" />
     <ClInclude Include="IStream.h" />

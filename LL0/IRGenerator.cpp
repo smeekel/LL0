@@ -16,11 +16,8 @@ IRGenerator::~IRGenerator()
 
 void IRGenerator::generate(SafeNode parseTree)
 {
-  printf(".MODULE\n");
-
   gBlock(parseTree.get());
-
-  printf("\n");
+  ir.print();
 }
 
 void IRGenerator::gBlock(const Node* n)
@@ -59,7 +56,7 @@ void IRGenerator::gFunction(const Node* n)
   gFunctionPushParams(params, temp);
 
   gBlock(body);
-  printf("  RET\n");
+  ir.addOp(RET);
 
   ir.sym.scopePop();
 }
@@ -77,7 +74,7 @@ void IRGenerator::gFunctionPushParams(const Node* n, int& index)
     if( param.isNull() )
       throw IR_EXCEPTION("Duplicate parameter name [%s]", n->getRaw());
 
-    printf("  SMOV %i, $%i\n", index++, param.vindex);
+    ir.addOp(SMOV, index++, param.vindex);
   }
 }
 
@@ -88,12 +85,12 @@ void IRGenerator::gReturn(const Node* n)
   if( expr )
   {
     const int temp = gEval(expr);
-    printf("  PUSH $%i\n", temp);
-    printf("  RET 1\n");
+    ir.addOp(PUSH, temp);
+    ir.addOp(RET, 1);
   }
   else
   {
-    printf("  RET\n");
+    ir.addOp(RET);
   }
 
 }
@@ -110,7 +107,7 @@ void IRGenerator::gVar(const Node* n)
   if( expression )
   {
     int temp = gEval(expression);
-    printf("  MOV $%i, $%i\n", temp, sym.vindex);
+    ir.addOp(MOV, temp, sym.vindex);
   }
 }
 
@@ -148,7 +145,7 @@ int IRGenerator::gAssignment(const Node* n)
     throw IR_EXCEPTION("Undefined variable [%s]", lparam->getRaw());
 
   const int expr_temp = gEval(rparam);
-  printf("  MOV $%i, $%i\n", expr_temp, sym.vindex);
+  ir.addOp(MOV, expr_temp, sym.vindex);
 
   return sym.vindex;
 }
@@ -159,14 +156,19 @@ int IRGenerator::gCall(const Node* n)
   const int   temp = ir.newVirtualIndex();
 
   if( !name->is(N_IDENT) )
-    throw EXCEPTION("Compiler error: N_CALL/A != N_IDENT");
+    throw IR_EXCEPTION("Compiler error: N_CALL/A != N_IDENT");
+  
+  Symbol sname = ir.sym.newSymbol(name->getRaw());
+  if( sname.isNull() )
+    throw IR_EXCEPTION("Duplicate identifier [%s]", name->getRaw());
 
   const int count = countParameters(n->getB());
     
   gPushCallParameters(n->getB());
-  printf("  CALL \"%s\", %d\n", name->getRaw(), count);
-  printf("  POP $%i\n", temp);
-  printf("  SWEEP %i\n", count);
+
+  ir.addOp(CALL, sname.vindex, count);
+  ir.addOp(SMOV, 0, temp);
+  ir.addOp(POP, count+1);
 
   return temp; //debug
 }
@@ -181,7 +183,7 @@ void IRGenerator::gPushCallParameters(const Node* n)
   else
   {
     const int temp = gEval(n);
-    printf("  PUSH $%i\n", temp);
+    ir.addOp(PUSH, temp);
   }
 }
 
@@ -193,7 +195,7 @@ int IRGenerator::gIf(const Node* n)
 
   const int expTemp     = gEval(condition);
   const int labelFalse  = ir.newVirtualIndex();
-  printf("  JMPF @L%i <$%i>\n", labelFalse, expTemp);
+  ir.addOp(JMPF, labelFalse, expTemp);
 
   gBlock(onTrue);
 
@@ -204,7 +206,7 @@ int IRGenerator::gIf(const Node* n)
   else
   {
     const int labelExit = ir.newVirtualIndex();
-    printf("  JMP @L%i\n", labelExit);
+    ir.addOp(JMP, labelExit);
     printf("@L%i:\n", expTemp);
 
     gBlock(onFalse);
@@ -218,7 +220,13 @@ int IRGenerator::gIf(const Node* n)
 int IRGenerator::gLiteral(const Node* n)
 {
   const int temp = ir.newVirtualIndex();
-  printf("  LOADK n %s, $%i\n", n->getRaw(), temp);
+  
+  IROp op(LOADK);
+  op.raw  = n->getRaw();
+  op.B    = temp;
+
+  ir.addOp(op);
+  
   return temp;
 }
 
@@ -238,7 +246,7 @@ int IRGenerator::gPlus(const Node* n)
   const int a = gEval(n->getA());
   const int b = gEval(n->getB());
 
-  printf("  ADD $%i, $%i, $%i\n", a, b, temp);
+  ir.addOp(ADD, a, b, temp);
 
   return temp;
 }
@@ -249,7 +257,7 @@ int IRGenerator::gMinus(const Node* n)
   const int a = gEval(n->getA());
   const int b = gEval(n->getB());
 
-  printf("  SUB $%i, $%i, $%i\n", a, b, temp);
+  ir.addOp(SUB, a, b, temp);
 
   return temp;
 }
@@ -260,7 +268,7 @@ int IRGenerator::gMul(const Node* n)
   const int a = gEval(n->getA());
   const int b = gEval(n->getB());
 
-  printf("  MUL $%i, $%i, $%i\n", a, b, temp);
+  ir.addOp(MUL, a, b, temp);
 
   return temp;
 }
@@ -271,7 +279,7 @@ int IRGenerator::gDiv(const Node* n)
   const int a = gEval(n->getA());
   const int b = gEval(n->getB());
 
-  printf("  DIV $%i, $%i, $%i\n", a, b, temp);
+  ir.addOp(DIV, a, b, temp);
 
   return temp;
 }
