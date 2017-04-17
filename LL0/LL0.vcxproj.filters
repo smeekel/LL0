@@ -23,6 +23,9 @@
     <ClCompile Include="errsatate.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="InputStream.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="lexer.h">
@@ -31,10 +34,13 @@
     <ClInclude Include="tokens.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="types.h">
+    <ClInclude Include="errstate.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="errstate.h">
+    <ClInclude Include="InputStream.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="util.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

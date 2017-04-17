@@ -1,19 +1,17 @@
 #pragma once
-#include "types.h"
 #include "errstate.h"
+#include "InputStream.h"
 
 
 typedef struct
 {
-  ErrState errorState;
-
+  ErrState      errorState;
+  InputStream*  input;
 } LexerState;
 
-typedef LexerState* const PLexer;
 
-
-int   lexer_Initialize  (PLexer);
-int   lexer_Terminate   (PLexer);
-int   lexer_Peek        (PLexer);
-int   lexer_Next        (PLexer);
+int   lexer_initialize  (LexerState*, const char* filename);
+int   lexer_terminate   (LexerState*);
+int   lexer_peek        (LexerState*);
+int   lexer_next        (LexerState*);
 

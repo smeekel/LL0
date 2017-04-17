@@ -100,7 +100,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <ExceptionHandling>false</ExceptionHandling>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
     </ClCompile>
@@ -142,14 +142,16 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="errsatate.c" />
+    <ClCompile Include="InputStream.c" />
     <ClCompile Include="lexer.c" />
     <ClCompile Include="main.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="errstate.h" />
+    <ClInclude Include="InputStream.h" />
     <ClInclude Include="lexer.h" />
     <ClInclude Include="tokens.h" />
-    <ClInclude Include="types.h" />
+    <ClInclude Include="util.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="..\testcases\test0.txt" />
