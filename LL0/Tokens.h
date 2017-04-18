@@ -3,7 +3,7 @@
 
 enum Tokens
 {
-  T_NULL  = -1,
+  T_ERROR = -1,
   T_EOF   = 0,
 
   T_SEMICOLON,

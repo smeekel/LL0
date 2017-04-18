@@ -1,4 +1,6 @@
 #pragma once
+#include <stdint.h>
+#include <stdbool.h>
 #include "errstate.h"
 #include "InputStream.h"
 #include "string.h"
@@ -6,7 +8,7 @@
 
 typedef struct
 {
-  ErrState      errorState;
+  ErrState      error;
   InputStream*  input;
   
   int           c;
