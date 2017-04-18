@@ -2,10 +2,10 @@
 #include "tokens.h"
 
 
-#define READCHAR()  (p->input->readchar(p->input))
 #define PEEKCHAR()  (p->input->peekchar(p->input))
 #define C           (p->c)
 
+static int  next                (LexerState*);
 static int  nextchar            (LexerState*);
 static int  eat_comment         (LexerState*);
 static void newline             (LexerState*);
@@ -22,11 +22,17 @@ static bool is_hex              (const int);
 int lexer_initialize(LexerState* p, const char* filename)
 {
   errstate_initialize(&p->error);
-  string_initialize(&p->tokenraw);
+  string_initialize(&p->raw);
+  string_initialize(&p->current_raw);
 
-  p->c      = 0;
-  p->line   = 1;
-  p->column = 0;
+  p->c = 0;
+
+  p->token          = T_ERROR;
+  p->current_token  = T_ERROR;
+  p->line           = 1;
+  p->column         = 0;
+  p->current_line   = 1;
+  p->current_column = 0;
 
   p->input = is_openfile(filename);
 
@@ -44,9 +50,22 @@ int lexer_initialize(LexerState* p, const char* filename)
 
 int lexer_terminate(LexerState* p)
 {
-  string_terminate  (&p->tokenraw);
+  string_terminate  (&p->current_raw);
+  string_terminate  (&p->raw);
   errstate_terminate(&p->error);
   return SUCCESS;
+}
+
+int lexer_next(LexerState* p)
+{
+  p->current_token  = p->token;
+  p->current_line   = p->line;
+  p->current_column = p->column;
+  string_copy(&p->raw, &p->current_raw);
+
+  p->token = next(p);
+
+  return p->current_token;
 }
 
 
@@ -58,14 +77,14 @@ void newline(LexerState* p)
 
 int nextchar(LexerState* p)
 {
-  p->c = READCHAR();
+  p->c = p->input->readchar(p->input);
   p->column++;
-  return (p->input==0);
+  return p->c;
 }
 
-int lexer_next(LexerState* p)
+int next(LexerState* p)
 {
-  string_clear(&p->tokenraw);
+  string_clear(&p->raw);
 
   if( p->input->iseof(p->input) )
     return 0;
@@ -89,7 +108,7 @@ restart:
       const char peek = PEEKCHAR();
       if( peek=='/' || peek=='*' )
       {
-        if( !eat_comment(p) ) return ERROR;
+        if( !eat_comment(p) ) return T_ERROR;
         goto restart;
       }
       else
@@ -123,26 +142,26 @@ restart:
         return read_literal(p);
 
       errstate_adderror(&p->error, "[%d:%d] Unexpected input", p->line, p->column);
-      return ERROR;
+      return T_ERROR;
     }
   }
 }
 
 int read_literal(LexerState* p)
 {
-  string_push(&p->tokenraw, C);
-  READCHAR();
+  string_push(&p->raw, C);
+  nextchar(p);
 
   while( is_alpha(C) || is_digit(C) || C=='_' )
   {
-    string_push(&p->tokenraw, C);
-    READCHAR();
+    string_push(&p->raw, C);
+    nextchar(p);
   }
 
-  #define COMPARE(x) ( string_compare(&p->tokenraw, (x)) )
+  #define COMPARE(x) ( string_compare(&p->raw, (x))==0 )
   
   int type = T_IDENT;
-  switch( '0' )
+  switch( p->raw.buffer[0] )
   {
     case 'e':
     {
@@ -205,7 +224,7 @@ int read_literal(LexerState* p)
   }
 
   if( type!=T_IDENT )
-    string_clear(&p->tokenraw);
+    string_clear(&p->raw);
 
 
   return type;
@@ -228,14 +247,14 @@ int read_number(LexerState* p)
     const int peek = PEEKCHAR();
     if( peek=='b' )
     {
-      READCHAR();
-      READCHAR();
+      nextchar(p);
+      nextchar(p);
       return read_binary_number(p);
     }
     else if( peek=='x' )
     {
-      READCHAR();
-      READCHAR();
+      nextchar(p);
+      nextchar(p);
       return read_hex_number(p);
     }
   }
@@ -244,11 +263,11 @@ int read_number(LexerState* p)
   int largestDigit = 0;
   while( true )
   {
-    string_push(&p->tokenraw, C);
+    string_push(&p->raw, C);
 
     if( C>largestDigit ) largestDigit = C;
 
-    READCHAR();
+    nextchar(p);
     if( C=='.' )
     {
       const char peek = PEEKCHAR();
@@ -258,7 +277,7 @@ int read_number(LexerState* p)
         break;
       hasDecimal = true;
     }
-    else if( is_digit(C) )
+    else if( !is_digit(C) )
     {
       break;
     }
@@ -269,7 +288,7 @@ int read_number(LexerState* p)
     if( largestDigit>'7' )
     {
       errstate_adderror(&p->error, "[%d:%d] Invalid digit in octal number", p->line, p->column);
-      return ERROR;
+      return T_ERROR;
     }
     return T_OCT_NUMBER;
   }
@@ -288,12 +307,12 @@ int read_binary_number(LexerState* p)
       if( is_digit(C) && digitCount>0 )
         break;
       errstate_adderror(&p->error, "[%d:%d] Invalid digit in binary number", p->line, p->column);
-      return ERROR;
+      return T_ERROR;
     }
 
-    string_push(&p->tokenraw, C);
+    string_push(&p->raw, C);
     digitCount++;
-    READCHAR();
+    nextchar(p);
   }
 
   return T_BIN_NUMBER;
@@ -310,12 +329,12 @@ int read_hex_number(LexerState* p)
       if( digitCount>0 && !is_alpha(C) )
         break;
       errstate_adderror(&p->error, "[%d:%d] Invalid digit in hex number", p->line, p->column);
-      return ERROR;
+      return T_ERROR;
     }
 
-    string_push(&p->tokenraw, C);
+    string_push(&p->raw, C);
     digitCount++;
-    READCHAR();
+    nextchar(p);
   }
 
   return T_HEX_NUMBER;
@@ -323,7 +342,7 @@ int read_hex_number(LexerState* p)
 
 int eat_comment(LexerState* p)
 {
-  READCHAR();
+  nextchar(p);
 
   if( C=='*' )
   {
@@ -332,11 +351,11 @@ int eat_comment(LexerState* p)
     //
     while( true )
     {
-      READCHAR();
+      nextchar(p);
       if( C=='*' && PEEKCHAR()=='/' )
       {
-        READCHAR();
-        READCHAR();
+        nextchar(p);
+        nextchar(p);
         return SUCCESS;
       }
       else if( C=='\n' )
@@ -346,7 +365,7 @@ int eat_comment(LexerState* p)
       else if( p->input->iseof(p->input) )
       {
         errstate_adderror(&p->error, "[%d:%d] Unexpected EOF in comment", p->line, p->column);
-        return ERROR;
+        return T_ERROR;
       }
     }
   }
@@ -357,11 +376,11 @@ int eat_comment(LexerState* p)
     //
     while( true )
     {
-      READCHAR();
+      nextchar(p);
       if( C=='\n' )
       {
         newline(p);
-        READCHAR();
+        nextchar(p);
         return SUCCESS;
       }
       else if( p->input->iseof(p->input) )

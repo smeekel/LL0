@@ -9,8 +9,9 @@ typedef struct
   uint32_t  length;
 } String;
 
-int     string_initialize     (String*);
-int     string_terminate      (String*);
-int     string_clear          (String*);
+void    string_initialize     (String*);
+void    string_terminate      (String*);
+void    string_clear          (String*);
 int     string_push           (String*, const char);
 int     string_compare        (String*, const char*);
+int     string_copy           (const String*, String*);

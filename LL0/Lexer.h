@@ -12,9 +12,15 @@ typedef struct
   InputStream*  input;
   
   int           c;
+  int           token;
   uint32_t      line;
   uint32_t      column;
-  String        tokenraw;
+  String        raw;
+
+  int           current_token;
+  String        current_raw;
+  uint32_t      current_line;
+  uint32_t      current_column;
 } LexerState;
 
 
