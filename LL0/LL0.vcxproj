@@ -150,6 +150,7 @@
     <ClInclude Include="errstate.h" />
     <ClInclude Include="InputStream.h" />
     <ClInclude Include="lexer.h" />
+    <ClInclude Include="string.h" />
     <ClInclude Include="tokens.h" />
     <ClInclude Include="util.h" />
   </ItemGroup>
