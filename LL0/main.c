@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <malloc.h>
 #include "parser.h"
 #include "irgenerator.h"
 #include "rbtree.h"
@@ -12,12 +13,30 @@ typedef struct
   int     value;
 } Derp;
 
+static int derp_compare(const RBNode* A, const RBNode* B)
+{
+  return 0;
+}
+
+static void derp_delete(RBNode* n)
+{
+  Derp* nn = (Derp*)n;
+  string_terminate(&nn->key);
+}
+
+static Derp* derp_new(const char* name, const int value)
+{
+  Derp* n = (Derp*)malloc(sizeof(Derp));
+  string_initialize(&n->key);
+  string_copy_cstr(&n->key, name);
+}
+
 
 void main()
 {
   RBTree tree;
 
-  rbtree_initialize(&tree);
+  rbtree_initialize(&tree, derp_compare, derp_delete);
 
 
   rbtree_terminate(&tree);

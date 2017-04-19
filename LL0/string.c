@@ -5,6 +5,9 @@
 #include "util.h"
 
 
+static int copy(String* dst, const char* src, const size_t size);
+
+
 void string_initialize(String* s)
 {
   s->buffer = NULL;
@@ -23,7 +26,7 @@ void string_clear(String* s)
   if( s->length>0 ) s->buffer[0] = 0;
 }
 
-int string_compare(String* s, const char* B)
+int string_compare_cstr(String* s, const char* B)
 {
   if( s->buffer==NULL )
   {
@@ -52,16 +55,33 @@ int string_push(String* s, const char C)
 
 int string_copy(const String* src, String* dst)
 {
-  if( src->offset>0 && dst->length<src->offset+1 )
+  copy(dst, src->buffer, src->offset);
+  dst->offset = src->offset;
+
+  return SUCCESS;
+}
+
+int string_copy_cstr(String* dst, const char* src)
+{
+  const size_t length = strlen(src);
+  copy(dst, src, length);
+  dst->offset = (uint32_t)length;
+
+  return SUCCESS;
+}
+
+int copy(String* dst, const char* src, const size_t size)
+{
+  if( size>0 && dst->length<size+1 )
   {
-    dst->buffer = (char*)realloc(dst->buffer, (size_t)src->offset+1);
-    dst->length = src->offset+1;
+    dst->buffer = (char*)realloc(dst->buffer, size+1);
+    dst->length = (uint32_t)(size+1);
   }
 
-  dst->offset = src->offset;
-  if( src->offset>0 )
+  //dst->offset = size;
+  if( size>0 )
   {
-    strncpy(dst->buffer, src->buffer, src->offset);
+    strncpy(dst->buffer, src, size);
     dst->buffer[dst->offset] = 0;
   }
   else if( dst->length>0 )

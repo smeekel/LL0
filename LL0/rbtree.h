@@ -5,7 +5,8 @@
 
 typedef struct RBTree RBTree;
 typedef struct RBNode RBNode;
-typedef int (*rbnode_compare)(const RBNode* A, const RBNode* b);
+typedef int   (*rbnode_compare) (const RBNode*, const RBNode*);
+typedef void  (*rbnode_delete)  (RBNode*);
 
 struct RBNode
 {
@@ -19,8 +20,10 @@ struct RBTree
 {
   RBNode*         root;
   uint32_t        count;
-  rbnode_compare  fcompare;
+  rbnode_compare  ncompare;
+  rbnode_delete   ndelete;
 };
 
-int   rbtree_initialize   (RBTree*);
+int   rbtree_initialize   (RBTree*, rbnode_compare, rbnode_delete);
 int   rbtree_terminate    (RBTree*);
+int   rbtree_add          (RBTree*, RBNode*);

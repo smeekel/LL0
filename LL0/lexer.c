@@ -161,7 +161,7 @@ int read_literal(Lexer* p)
     nextchar(p);
   }
 
-  #define COMPARE(x) ( string_compare(&p->raw, (x))==0 )
+  #define COMPARE(x) ( string_compare_cstr(&p->raw, (x))==0 )
   
   int type = T_IDENT;
   switch( p->raw.buffer[0] )
