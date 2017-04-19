@@ -35,7 +35,7 @@ static Node*  pEnd    = &NodeEnd;
 #define ACCEPT(t)   ( accept(p, (t)) )
 #define EXPECT(t)   { if( expect(p, (t)) ) goto error; }
 #define NEXT()      { lexer_next(&p->lexer); }
-
+#define ASSERT(x)   { if( !(x) ) goto error; }
 
 int parser_initialize(ParserState* p, const char* filename)
 {
@@ -112,37 +112,179 @@ Node* pStatements(ParserState* p)
 Node* pStatement(ParserState* p)
 {
   if( ACCEPT(T_IF) )
-  {
     return pIfStatement(p);
-  }
-  /*
   else if( ACCEPT(T_FUNCTION) )
-  {
     return pFunction(p);
-  }
   else if( ACCEPT(T_RETURN) )
-  {
     return pReturnStatement(p);
-  }
   else if( ACCEPT(T_VAR) )
-  {
     return pVariableDefinition(p);
-  }
   else if( ACCEPT(T_FOR) )
-  {
     return pForStatement(p);
-  }
   else if( ACCEPT(T_LBRACE) )
-  {
     return pBlockStatement(p);
-  }
-  */
   else if( isExpression(p) )
-  {
     return pExpressionStatement(p);
-  }
   
   SETERROR("Unexpected input");
+  return NULL;
+}
+
+Node* pForStatement(ParserState* p)
+{
+  Node* setup = NULL;
+  Node* cond  = NULL;
+  Node* each  = NULL;
+  Node* body  = NULL;
+
+  setup = pAssignmentExpression(p);
+  ASSERT(setup);
+  EXPECT(T_SEMICOLON);
+
+  cond = pAssignmentExpression(p);
+  ASSERT(cond);
+  EXPECT(T_SEMICOLON);
+
+  each = pAssignmentExpression(p);
+  ASSERT(each);
+  EXPECT(T_RPREN);
+
+  body = pStatement(p);
+  return node_alloc2(N_BLOCK, setup, node_alloc3(N_FOR, cond, each, body));
+
+error:
+  node_delete_tree(setup);
+  node_delete_tree(cond);
+  node_delete_tree(each);
+  node_delete_tree(body);
+  return NULL;
+}
+
+Node* pVariableDefinition(ParserState* p)
+{
+  Node* name = NULL;
+  Node* expr = NULL;
+
+
+  if( TOKEN()!=T_IDENT )
+  {
+    SETERROR("Expected variable name");
+    goto error;
+  }
+  node_set_token(p, name);
+  NEXT();
+
+  if( ACCEPT(T_ASSIGNMENT) )
+  {
+    expr = pExpression(p);
+    ASSERT(expr);
+  }
+
+  EXPECT(T_SEMICOLON);
+  return node_alloc2(N_VAR, name, expr);
+
+error:
+  node_delete_tree(name);
+  node_delete_tree(expr);
+  return NULL;
+}
+
+Node* pReturnStatement(ParserState* p)
+{
+  Node* expr = NULL;
+
+  if( isExpression(p) )
+  {
+    expr = pAssignmentExpression(p);
+    ASSERT(expr);
+    EXPECT(T_SEMICOLON);
+  }
+  return expr;
+
+error:
+  node_delete_tree(expr);
+  return NULL;
+}
+
+Node* pBlockStatement(ParserState* p)
+{
+  Node* root = NULL;
+
+  root = pStatements(p);
+  ASSERT(root);
+  EXPECT(T_RBRACE);
+  return root;
+
+error:
+  node_delete_tree(root);
+  return NULL;
+}
+
+Node* pFunction(ParserState* p)
+{
+  Node* name    = NULL;
+  Node* params  = NULL;
+  Node* body    = NULL;
+
+
+  if( TOKEN()==T_IDENT )
+  {
+    name = node_alloc0(N_IDENT);
+    node_set_token(p, name);
+    NEXT();
+  }
+  else
+  {
+    // I might be able to get away with just NULL
+    name = node_alloc0(N_ANONYMOUS);
+  }
+
+  EXPECT(T_LPREN);
+  params = pParameterDefinition(p);
+  ASSERT(params);
+  
+  EXPECT(T_LBRACE);
+  body = pBlockStatement(p);
+  ASSERT(body);
+ 
+  return node_alloc3(N_FUNCTION, name, params, body);
+
+error:
+  node_delete_tree(name);
+  node_delete_tree(params);
+  node_delete_tree(body);
+  return NULL;
+}
+
+Node* pParameterDefinition(ParserState* p)
+{
+  Node* root = NULL;
+
+  while( true )
+  {
+    if( TOKEN()==T_IDENT )
+    {
+      Node* ident = node_alloc0(N_IDENT);
+      node_set_token(p, ident);
+      root = root ? node_alloc2(N_GLUE, root, ident) : ident ;
+      NEXT();
+      ACCEPT(T_COMMA);
+    }
+    else if( ACCEPT(T_RPREN) )
+    {
+      break;
+    }
+    else
+    {
+      SETERROR("Syntax error in parameter definition");
+      goto error;
+    }
+  }
+
+  return root;
+
+error:
+  node_delete_tree(root);
   return NULL;
 }
 
@@ -155,15 +297,16 @@ Node* pIfStatement(ParserState* p)
   
   EXPECT(T_LPREN);
   condition = pExpression(p);
+  ASSERT(condition);
   EXPECT(T_RPREN);
 
   onTrue = pStatement(p);
-  if( !onTrue ) goto error;
+  ASSERT(onTrue);
 
   if( ACCEPT(T_ELSE) )
   {
     onFalse = pStatement(p);
-    if( !onFalse ) goto error;
+    ASSERT(onFalse);
   }
   
   return node_alloc3(N_IF, condition, onTrue, onFalse);
@@ -181,6 +324,7 @@ Node* pExpressionStatement(ParserState* p)
   Node* expr = NULL;
 
   expr = pAssignmentExpression(p);
+  ASSERT(expr);
   EXPECT(T_SEMICOLON);
   return expr;
 
@@ -195,14 +339,14 @@ Node* pAssignmentExpression(ParserState* p)
   Node* rparam = NULL;
 
   lparam = pExpression(p);
-  if( !lparam ) goto error;
+  ASSERT(lparam);
 
   if( TOKEN()!=T_ASSIGNMENT ) 
     return lparam;
 
   NEXT();
   rparam = pExpression(p);
-  if( !rparam ) goto error;
+  ASSERT(rparam);
 
   return node_alloc2(N_ASSIGNMENT, lparam, rparam);
 
@@ -215,7 +359,7 @@ error:
 Node* pExpression(ParserState* p)
 {
   Node* root = pTerm(p);
-  if( !root ) goto error;
+  ASSERT(root);
 
 
   while( true )
@@ -226,7 +370,7 @@ Node* pExpression(ParserState* p)
 
       NEXT();
       term = pTerm(p);
-      if( !term ) goto error;
+      ASSERT(term);
       
       root = node_alloc2(N_ADD, root, term);
     }
@@ -236,7 +380,7 @@ Node* pExpression(ParserState* p)
 
       NEXT();
       term = pTerm(p);
-      if( !term ) goto error;
+      ASSERT(term);
       
       root = node_alloc2(N_SUB, root, term);
     }
@@ -254,7 +398,7 @@ error:
 Node* pTerm(ParserState* p)
 {
   Node* root = pFactor(p);
-  if( !root ) goto error;
+  ASSERT(root);
 
 
   while( true )
@@ -265,7 +409,7 @@ Node* pTerm(ParserState* p)
 
       NEXT();
       factor = pFactor(p);
-      if( !factor ) goto error;
+      ASSERT(factor);
       
       root = node_alloc2(N_ADD, root, factor);
     }
@@ -275,7 +419,7 @@ Node* pTerm(ParserState* p)
 
       NEXT();
       factor = pFactor(p);
-      if( !factor ) goto error;
+      ASSERT(factor);
       
       root = node_alloc2(N_SUB, root, factor);
     }
@@ -316,6 +460,7 @@ Node* pFactor(ParserState* p)
         // Function call
         //
         n = pFunctionCall(p);
+        ASSERT(n);
       }
       else
       {
@@ -333,6 +478,7 @@ Node* pFactor(ParserState* p)
     {
       NEXT();
       n = pAssignmentExpression(p);
+      ASSERT(n);
       EXPECT(T_RPREN);
 
       break;
@@ -362,7 +508,7 @@ Node* pFunctionCall(ParserState* p)
 
   EXPECT(T_LPREN);
   params = pExpressionList(p);
-  if( !params ) goto error;
+  ASSERT(params);
   EXPECT(T_RPREN);
 
   return node_alloc2(N_CALL, name, params);
@@ -386,7 +532,7 @@ Node* pExpressionList(ParserState* p)
     else if( isExpression(p) )
     {
       Node* expr = pAssignmentExpression(p);
-      if( !expr ) goto error;
+      ASSERT(expr);
       list = list ? node_alloc2(N_NEXT, list, expr) : expr ;
       ACCEPT(T_COMMA);
     }
