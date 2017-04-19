@@ -71,7 +71,7 @@ void rprint(const Node* n, const int depth)
 {
   if( !n ) return;
 
-  printf("%*s%s", depth*2, "", node_type_to_string(n->type));
+  printf("%*s%s\n", depth*2, "", node_type_to_string(n->type));
   if( n->A ) rprint(n->A, depth+1);
   if( n->B ) rprint(n->B, depth+1);
   if( n->C ) rprint(n->C, depth+1);

@@ -63,7 +63,10 @@ int lexer_next(LexerState* p)
   p->current_column = p->column;
   string_copy(&p->raw, &p->current_raw);
 
-  p->token = next(p);
+  if( p->input->iseof(p->input) )
+    p->token = T_EOF;
+  else
+    p->token = next(p);
 
   return p->current_token;
 }
@@ -87,7 +90,7 @@ int next(LexerState* p)
   string_clear(&p->raw);
 
   if( p->input->iseof(p->input) )
-    return 0;
+    return T_EOF;
 
 restart:
   switch( p->c )
