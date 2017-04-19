@@ -145,12 +145,16 @@
     <ClCompile Include="InputStream.c" />
     <ClCompile Include="lexer.c" />
     <ClCompile Include="main.c" />
+    <ClCompile Include="node.c" />
+    <ClCompile Include="parser.c" />
     <ClCompile Include="string.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="errstate.h" />
     <ClInclude Include="InputStream.h" />
     <ClInclude Include="lexer.h" />
+    <ClInclude Include="node.h" />
+    <ClInclude Include="parser.h" />
     <ClInclude Include="string.h" />
     <ClInclude Include="tokens.h" />
     <ClInclude Include="util.h" />
