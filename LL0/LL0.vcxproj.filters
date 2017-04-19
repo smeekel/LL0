@@ -44,7 +44,7 @@
     <ClCompile Include="irmodule.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="rbtree.c">
+    <ClCompile Include="avltree.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -85,7 +85,7 @@
     <ClInclude Include="symbol.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="rbtree.h">
+    <ClInclude Include="avltree.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

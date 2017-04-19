@@ -1,8 +1,8 @@
-#include "rbtree.h"
+#include "avltree.h"
 #include "errstate.h"
 
 
-int rbtree_initialize(RBTree* tree, rbnode_compare pfcompare, rbnode_delete pfdelete)
+int avltree_initialize(AVLTree* tree, avlnode_compare pfcompare, avlnode_delete pfdelete)
 {
   tree->root      = NULL;
   tree->count     = 0;
@@ -12,12 +12,12 @@ int rbtree_initialize(RBTree* tree, rbnode_compare pfcompare, rbnode_delete pfde
   return SUCCESS;
 }
 
-int rbtree_terminate(RBTree* tree)
+int avltree_terminate(AVLTree* tree)
 {
   return SUCCESS;
 }
 
-int rbtree_add(RBTree* tree, RBNode* node)
+int avltree_insert(AVLTree* tree, AVLNode* node)
 {
   return SUCCESS;
 }

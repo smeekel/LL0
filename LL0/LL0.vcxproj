@@ -149,7 +149,7 @@
     <ClCompile Include="main.c" />
     <ClCompile Include="node.c" />
     <ClCompile Include="parser.c" />
-    <ClCompile Include="rbtree.c" />
+    <ClCompile Include="avltree.c" />
     <ClCompile Include="string.c" />
     <ClCompile Include="symboltable.c" />
   </ItemGroup>
@@ -161,7 +161,7 @@
     <ClInclude Include="lexer.h" />
     <ClInclude Include="node.h" />
     <ClInclude Include="parser.h" />
-    <ClInclude Include="rbtree.h" />
+    <ClInclude Include="avltree.h" />
     <ClInclude Include="string.h" />
     <ClInclude Include="symbol.h" />
     <ClInclude Include="symboltable.h" />

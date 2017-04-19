@@ -15,6 +15,7 @@ static int  read_hex_number     (Lexer*);
 static int  read_binary_number  (Lexer*);
 static bool is_digit            (const int);
 static bool is_alpha            (const int);
+static bool is_literal          (const int);
 static bool is_hex              (const int);
 
 
@@ -141,7 +142,7 @@ restart:
     {
       if( is_digit(p->c) )
         return read_number(p);
-      else if( is_alpha(p->c) )
+      else if( is_literal(p->c) )
         return read_literal(p);
 
       errstate_adderror(&p->error, "[%d:%d] Unexpected input", p->line, p->column);
@@ -155,7 +156,7 @@ int read_literal(Lexer* p)
   string_push(&p->raw, C);
   nextchar(p);
 
-  while( is_alpha(C) || is_digit(C) || C=='_' )
+  while( is_literal(C) )
   {
     string_push(&p->raw, C);
     nextchar(p);
@@ -420,3 +421,7 @@ bool is_alpha(const int c)
     ;
 }
 
+bool is_literal(const int c)
+{
+  return is_alpha(c) || is_digit(c) || c=='$' || c=='_';
+}

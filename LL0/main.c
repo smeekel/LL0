@@ -2,23 +2,23 @@
 #include <malloc.h>
 #include "parser.h"
 #include "irgenerator.h"
-#include "rbtree.h"
+#include "avltree.h"
 #include "string.h"
 
 
 typedef struct
 {
-  RBNode  node;
+  AVLNode node;
   String  key;
   int     value;
 } Derp;
 
-static int derp_compare(const RBNode* A, const RBNode* B)
+static int derp_compare(const AVLNode* A, const AVLNode* B)
 {
   return 0;
 }
 
-static void derp_delete(RBNode* n)
+static void derp_delete(AVLNode* n)
 {
   Derp* nn = (Derp*)n;
   string_terminate(&nn->key);
@@ -29,17 +29,18 @@ static Derp* derp_new(const char* name, const int value)
   Derp* n = (Derp*)malloc(sizeof(Derp));
   string_initialize(&n->key);
   string_copy_cstr(&n->key, name);
+  return n;
 }
 
 
 void main()
 {
-  RBTree tree;
+  AVLTree tree;
 
-  rbtree_initialize(&tree, derp_compare, derp_delete);
+  avltree_initialize(&tree, derp_compare, derp_delete);
+  avltree_insert(&tree, (AVLNode*)derp_new("abc", 123));
 
-
-  rbtree_terminate(&tree);
+  avltree_terminate(&tree);
 
   /*
   Parser parser;
