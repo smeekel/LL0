@@ -2,27 +2,27 @@
 #include "tokens.h"
 
 
-static Node*  pStatements           (ParserState*);
-static Node*  pStatement            (ParserState*);
-static Node*  pExpressionStatement  (ParserState*);
-static Node*  pBlockStatement       (ParserState*);
-static Node*  pReturnStatement      (ParserState*);
-static Node*  pVariableDefinition   (ParserState*);
-static Node*  pFunction             (ParserState*);
-static Node*  pParameterDefinition  (ParserState*);
-static Node*  pIfStatement          (ParserState*);
-static Node*  pForStatement         (ParserState*);
-static Node*  pAssignmentExpression (ParserState*);
-static Node*  pExpression           (ParserState*);
-static Node*  pTerm                 (ParserState*);
-static Node*  pFactor               (ParserState*);
-static Node*  pFunctionCall         (ParserState*);
-static Node*  pExpressionList       (ParserState*);
+static Node*  pStatements           (Parser*);
+static Node*  pStatement            (Parser*);
+static Node*  pExpressionStatement  (Parser*);
+static Node*  pBlockStatement       (Parser*);
+static Node*  pReturnStatement      (Parser*);
+static Node*  pVariableDefinition   (Parser*);
+static Node*  pFunction             (Parser*);
+static Node*  pParameterDefinition  (Parser*);
+static Node*  pIfStatement          (Parser*);
+static Node*  pForStatement         (Parser*);
+static Node*  pAssignmentExpression (Parser*);
+static Node*  pExpression           (Parser*);
+static Node*  pTerm                 (Parser*);
+static Node*  pFactor               (Parser*);
+static Node*  pFunctionCall         (Parser*);
+static Node*  pExpressionList       (Parser*);
 
-static bool   accept        (ParserState* p, int type);
-static bool   expect        (ParserState* p, int type);
-static bool   isExpression  (ParserState* p);
-static void   node_set_token(ParserState*, Node*);
+static bool   accept        (Parser* p, int type);
+static bool   expect        (Parser* p, int type);
+static bool   isExpression  (Parser* p);
+static void   node_set_token(Parser*, Node*);
 
 static Node   NodeEnd = {0};
 static Node*  pEnd    = &NodeEnd;
@@ -37,7 +37,7 @@ static Node*  pEnd    = &NodeEnd;
 #define NEXT()      { lexer_next(&p->lexer); }
 #define ASSERT(x)   { if( !(x) ) goto error; }
 
-int parser_initialize(ParserState* p, const char* filename)
+int parser_initialize(Parser* p, const char* filename)
 {
   errstate_initialize(&p->error);
   p->root = NULL;
@@ -49,7 +49,7 @@ int parser_initialize(ParserState* p, const char* filename)
   return SUCCESS;
 }
 
-int parser_terminate(ParserState* p)
+int parser_terminate(Parser* p)
 {
   lexer_terminate(&p->lexer);
   errstate_terminate(&p->error);
@@ -58,7 +58,7 @@ int parser_terminate(ParserState* p)
   return SUCCESS;
 }
 
-int parser_generate(ParserState* p)
+int parser_generate(Parser* p)
 {
   if( p->root ) return ERROR;
 
@@ -69,7 +69,7 @@ int parser_generate(ParserState* p)
   return SUCCESS;
 }
 
-bool accept(ParserState* p, int type)
+bool accept(Parser* p, int type)
 {
   if( type==TOKEN() )
   {
@@ -80,7 +80,7 @@ bool accept(ParserState* p, int type)
   return false;
 }
 
-bool expect(ParserState* p, int type)
+bool expect(Parser* p, int type)
 {
   if( !accept(p, type) )
   {
@@ -91,14 +91,15 @@ bool expect(ParserState* p, int type)
   return true;
 }
 
-Node* pStatements(ParserState* p)
+Node* pStatements(Parser* p)
 {
   Node* parent = NULL;
 
   while( true )
   {
     Node* statement = pStatement(p);
-    if( !statement ) break;
+    ASSERT(statement);
+    if( statement==pEnd ) break;
 
     parent = parent ? node_alloc2(N_GLUE, parent, statement) : statement ;
   }
@@ -110,7 +111,7 @@ error:
   return NULL;
 }
 
-Node* pStatement(ParserState* p)
+Node* pStatement(Parser* p)
 {
   if( ACCEPT(T_IF) )
     return pIfStatement(p);
@@ -127,10 +128,10 @@ Node* pStatement(ParserState* p)
   else if( isExpression(p) )
     return pExpressionStatement(p);
 
-  return NULL;
+  return pEnd;
 }
 
-Node* pForStatement(ParserState* p)
+Node* pForStatement(Parser* p)
 {
   Node* setup = NULL;
   Node* cond  = NULL;
@@ -160,7 +161,7 @@ error:
   return NULL;
 }
 
-Node* pVariableDefinition(ParserState* p)
+Node* pVariableDefinition(Parser* p)
 {
   Node* name = NULL;
   Node* expr = NULL;
@@ -190,7 +191,7 @@ error:
   return NULL;
 }
 
-Node* pReturnStatement(ParserState* p)
+Node* pReturnStatement(Parser* p)
 {
   Node* expr = NULL;
 
@@ -207,7 +208,7 @@ error:
   return NULL;
 }
 
-Node* pBlockStatement(ParserState* p)
+Node* pBlockStatement(Parser* p)
 {
   Node* root = NULL;
 
@@ -221,7 +222,7 @@ error:
   return NULL;
 }
 
-Node* pFunction(ParserState* p)
+Node* pFunction(Parser* p)
 {
   Node* name    = NULL;
   Node* params  = NULL;
@@ -257,7 +258,7 @@ error:
   return NULL;
 }
 
-Node* pParameterDefinition(ParserState* p)
+Node* pParameterDefinition(Parser* p)
 {
   Node* root = NULL;
 
@@ -289,7 +290,7 @@ error:
   return NULL;
 }
 
-Node* pIfStatement(ParserState* p)
+Node* pIfStatement(Parser* p)
 {
   Node* condition = NULL;
   Node* onTrue    = NULL;
@@ -320,7 +321,7 @@ error:
 }
 
 
-Node* pExpressionStatement(ParserState* p)
+Node* pExpressionStatement(Parser* p)
 {
   Node* expr = NULL;
 
@@ -334,7 +335,7 @@ error:
   return NULL;
 }
 
-Node* pAssignmentExpression(ParserState* p)
+Node* pAssignmentExpression(Parser* p)
 {
   Node* lparam = NULL;
   Node* rparam = NULL;
@@ -357,7 +358,7 @@ error:
   return NULL;
 }
 
-Node* pExpression(ParserState* p)
+Node* pExpression(Parser* p)
 {
   Node* root = pTerm(p);
   ASSERT(root);
@@ -397,7 +398,7 @@ error:
   return NULL;
 }
 
-Node* pTerm(ParserState* p)
+Node* pTerm(Parser* p)
 {
   Node* root = pFactor(p);
   ASSERT(root);
@@ -437,7 +438,7 @@ error:
   return NULL;
 }
 
-Node* pFactor(ParserState* p)
+Node* pFactor(Parser* p)
 {
   Node* n = NULL;
 
@@ -499,7 +500,7 @@ error:
   return NULL;
 }
 
-Node* pFunctionCall(ParserState* p)
+Node* pFunctionCall(Parser* p)
 {
   Node* name    = NULL;
   Node* params  = NULL;
@@ -521,7 +522,7 @@ error:
   return NULL;
 }
 
-Node* pExpressionList(ParserState* p)
+Node* pExpressionList(Parser* p)
 {
   Node* list = NULL;
 
@@ -546,7 +547,7 @@ Node* pExpressionList(ParserState* p)
   return NULL;
 }
 
-void node_set_token(ParserState* p, Node* n)
+void node_set_token(Parser* p, Node* n)
 {
   n->token_type = p->lexer.current_token;
   n->line       = p->lexer.current_line;
@@ -554,7 +555,7 @@ void node_set_token(ParserState* p, Node* n)
   string_copy(&p->lexer.current_raw, &n->raw);
 }
 
-bool isExpression(ParserState* p)
+bool isExpression(Parser* p)
 {
   switch( TOKEN() )
   {

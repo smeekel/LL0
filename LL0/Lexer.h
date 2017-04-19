@@ -21,11 +21,11 @@ typedef struct
   String        current_raw;
   uint32_t      current_line;
   uint32_t      current_column;
-} LexerState;
+} Lexer;
 
 
-int   lexer_initialize  (LexerState*, const char* filename);
-int   lexer_terminate   (LexerState*);
-int   lexer_peek        (LexerState*);
-int   lexer_next        (LexerState*);
+int   lexer_initialize  (Lexer*, const char* filename);
+int   lexer_terminate   (Lexer*);
+int   lexer_peek        (Lexer*);
+int   lexer_next        (Lexer*);
 

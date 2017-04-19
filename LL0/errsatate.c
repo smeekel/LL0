@@ -45,3 +45,8 @@ int errstate_haserror(PError p)
 {
   return (p->message!=NULL);
 }
+
+const char* errstate_getmessage(PError p)
+{
+  return p->message;
+}

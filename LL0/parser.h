@@ -7,11 +7,11 @@
 typedef struct
 {
   ErrState    error;
-  LexerState  lexer;
+  Lexer       lexer;
   Node*       root;
-} ParserState;
+} Parser;
 
 
-int   parser_initialize (ParserState*, const char* filename);
-int   parser_terminate  (ParserState*);
-int   parser_generate   (ParserState*);
+int   parser_initialize (Parser*, const char* filename);
+int   parser_terminate  (Parser*);
+int   parser_generate   (Parser*);

@@ -5,21 +5,21 @@
 #define PEEKCHAR()  (p->input->peekchar(p->input))
 #define C           (p->c)
 
-static int  next                (LexerState*);
-static int  nextchar            (LexerState*);
-static int  eat_comment         (LexerState*);
-static void newline             (LexerState*);
-static int  read_number         (LexerState*);
-static int  read_literal        (LexerState*);
-static int  read_hex_number     (LexerState*);
-static int  read_binary_number  (LexerState*);
+static int  next                (Lexer*);
+static int  nextchar            (Lexer*);
+static int  eat_comment         (Lexer*);
+static void newline             (Lexer*);
+static int  read_number         (Lexer*);
+static int  read_literal        (Lexer*);
+static int  read_hex_number     (Lexer*);
+static int  read_binary_number  (Lexer*);
 static bool is_digit            (const int);
 static bool is_alpha            (const int);
 static bool is_hex              (const int);
 
 
 
-int lexer_initialize(LexerState* p, const char* filename)
+int lexer_initialize(Lexer* p, const char* filename)
 {
   errstate_initialize(&p->error);
   string_initialize(&p->raw);
@@ -48,7 +48,7 @@ int lexer_initialize(LexerState* p, const char* filename)
   return SUCCESS;
 }
 
-int lexer_terminate(LexerState* p)
+int lexer_terminate(Lexer* p)
 {
   string_terminate  (&p->current_raw);
   string_terminate  (&p->raw);
@@ -56,7 +56,7 @@ int lexer_terminate(LexerState* p)
   return SUCCESS;
 }
 
-int lexer_next(LexerState* p)
+int lexer_next(Lexer* p)
 {
   p->current_token  = p->token;
   p->current_line   = p->line;
@@ -72,20 +72,20 @@ int lexer_next(LexerState* p)
 }
 
 
-void newline(LexerState* p)
+void newline(Lexer* p)
 {
   p->line++;
   p->column = 0;
 }
 
-int nextchar(LexerState* p)
+int nextchar(Lexer* p)
 {
   p->c = p->input->readchar(p->input);
   p->column++;
   return p->c;
 }
 
-int next(LexerState* p)
+int next(Lexer* p)
 {
   string_clear(&p->raw);
 
@@ -150,7 +150,7 @@ restart:
   }
 }
 
-int read_literal(LexerState* p)
+int read_literal(Lexer* p)
 {
   string_push(&p->raw, C);
   nextchar(p);
@@ -233,7 +233,7 @@ int read_literal(LexerState* p)
   return type;
 }
 
-int read_number(LexerState* p)
+int read_number(Lexer* p)
 {
   //
   // Base 10: 0-9+
@@ -299,7 +299,7 @@ int read_number(LexerState* p)
   return T_NUMBER;
 }
 
-int read_binary_number(LexerState* p)
+int read_binary_number(Lexer* p)
 {
   int digitCount = 0;
 
@@ -321,7 +321,7 @@ int read_binary_number(LexerState* p)
   return T_BIN_NUMBER;
 }
 
-int read_hex_number(LexerState* p)
+int read_hex_number(Lexer* p)
 {
   int digitCount = 0;
 
@@ -343,7 +343,7 @@ int read_hex_number(LexerState* p)
   return T_HEX_NUMBER;
 }
 
-int eat_comment(LexerState* p)
+int eat_comment(Lexer* p)
 {
   nextchar(p);
 
