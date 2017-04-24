@@ -26,7 +26,7 @@ void string_clear(String* s)
   if( s->length>0 ) s->buffer[0] = 0;
 }
 
-int string_compare_cstr(String* s, const char* B)
+int string_compare_cstr(const String* s, const char* B)
 {
   if( s->buffer==NULL )
   {
@@ -37,6 +37,11 @@ int string_compare_cstr(String* s, const char* B)
     if( B==NULL ) return 1;
     return strcmp(s->buffer, B);
   }
+}
+
+int string_compare(const String* A, const String* B)
+{
+  return string_compare_cstr(A, B->buffer);
 }
 
 int string_push(String* s, const char C)
@@ -82,7 +87,7 @@ int copy(String* dst, const char* src, const size_t size)
   if( size>0 )
   {
     strncpy(dst->buffer, src, size);
-    dst->buffer[dst->offset] = 0;
+    dst->buffer[size] = 0;
   }
   else if( dst->length>0 )
   {

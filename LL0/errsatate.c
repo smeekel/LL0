@@ -50,3 +50,10 @@ const char* errstate_getmessage(PError p)
 {
   return p->message;
 }
+
+void errstate_clear_all(PError p)
+{
+  free(p->message);
+  p->line = 0;
+}
+

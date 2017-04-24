@@ -15,7 +15,11 @@ typedef struct
 
 static int derp_compare(const AVLNode* A, const AVLNode* B)
 {
-  return 0;
+  const Derp* AA = (Derp*)A;
+  const Derp* BB = (Derp*)B;
+
+  printf("[%s]:[%s]=%d\n", AA->key.buffer, BB->key.buffer, string_compare(&AA->key, &BB->key));
+  return string_compare(&AA->key, &BB->key);
 }
 
 static void derp_delete(AVLNode* n)
@@ -32,13 +36,26 @@ static Derp* derp_new(const char* name, const int value)
   return n;
 }
 
+static void derp_print(const AVLNode* n, const int depth)
+{
+  const Derp* nn = (const Derp*)n;
+  printf("%*s[%s]\n", depth*2, "", nn->key.buffer);
+  if( n->left  ) derp_print(n->left,  depth+1);
+  if( n->right ) derp_print(n->right, depth+1);
+}
 
 void main()
 {
   AVLTree tree;
 
   avltree_initialize(&tree, derp_compare, derp_delete);
-  avltree_insert(&tree, (AVLNode*)derp_new("abc", 123));
+  avltree_insert(&tree, (AVLNode*)derp_new("10", 123));
+  avltree_insert(&tree, (AVLNode*)derp_new("20", 123));
+  avltree_insert(&tree, (AVLNode*)derp_new("30", 123));
+  avltree_insert(&tree, (AVLNode*)derp_new("40", 123));
+  avltree_insert(&tree, (AVLNode*)derp_new("50", 123));
+  avltree_insert(&tree, (AVLNode*)derp_new("25", 123));
+  derp_print(tree.root, 0);
 
   avltree_terminate(&tree);
 
