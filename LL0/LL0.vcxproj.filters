@@ -41,10 +41,7 @@
     <ClCompile Include="symboltable.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="irmodule.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="avltree.c">
+    <ClCompile Include="llist.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -76,16 +73,13 @@
     <ClInclude Include="irgenerator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="irmodule.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="symboltable.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="symbol.h">
+    <ClInclude Include="IROp.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="avltree.h">
+    <ClInclude Include="llist.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

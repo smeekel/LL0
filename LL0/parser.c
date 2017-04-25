@@ -37,6 +37,7 @@ static Node*  pEnd    = &NodeEnd;
 #define NEXT()      { lexer_next(&p->lexer); }
 #define ASSERT(x)   { if( !(x) ) goto error; }
 
+
 int parser_initialize(Parser* p, const char* filename)
 {
   errstate_initialize(&p->error);

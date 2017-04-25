@@ -1,11 +1,28 @@
 #pragma once
+#include "string.h"
+#include "llist.h"
 
+
+typedef struct Symbol Symbol;
+
+struct Symbol
+{
+  LListNode listData;
+  String    name;
+  int       scope;
+  int       vindex;
+};
 
 typedef struct
 {
-  int i;
+  LList   symbols;
+  int     currentScope;
+  int     lastVIndex;
 } SymbolTable;
 
 
-int   symtab_initialize   (SymbolTable*);
-int   symtab_terminate    (SymbolTable*);
+int       symtab_initialize   (SymbolTable*);
+int       symtab_terminate    (SymbolTable*);
+Symbol*   symtab_new          (SymbolTable*, const char* name);
+void      symtab_scope_push   (SymbolTable*);
+void      symtab_scope_pop    (SymbolTable*);

@@ -1,13 +1,15 @@
 #pragma once
 #include "errstate.h"
 #include "parser.h"
-#include "irmodule.h"
+#include "symboltable.h"
+#include "IROp.h"
 
 
 typedef struct
 {
-  ErrState  errors;
-  IRModule  module;
+  ErrState      errors;
+  SymbolTable   symtab;
+
 } IRGenerator;
 
 int   irgen_initialize  (IRGenerator*);

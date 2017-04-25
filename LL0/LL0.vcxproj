@@ -144,12 +144,11 @@
     <ClCompile Include="errsatate.c" />
     <ClCompile Include="InputStream.c" />
     <ClCompile Include="irgenerator.c" />
-    <ClCompile Include="irmodule.c" />
     <ClCompile Include="lexer.c" />
+    <ClCompile Include="llist.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="node.c" />
     <ClCompile Include="parser.c" />
-    <ClCompile Include="avltree.c" />
     <ClCompile Include="string.c" />
     <ClCompile Include="symboltable.c" />
   </ItemGroup>
@@ -157,13 +156,12 @@
     <ClInclude Include="errstate.h" />
     <ClInclude Include="InputStream.h" />
     <ClInclude Include="irgenerator.h" />
-    <ClInclude Include="irmodule.h" />
+    <ClInclude Include="IROp.h" />
     <ClInclude Include="lexer.h" />
+    <ClInclude Include="llist.h" />
     <ClInclude Include="node.h" />
     <ClInclude Include="parser.h" />
-    <ClInclude Include="avltree.h" />
     <ClInclude Include="string.h" />
-    <ClInclude Include="symbol.h" />
     <ClInclude Include="symboltable.h" />
     <ClInclude Include="tokens.h" />
     <ClInclude Include="util.h" />
