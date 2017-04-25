@@ -26,3 +26,5 @@ int       symtab_terminate    (SymbolTable*);
 Symbol*   symtab_new          (SymbolTable*, const char* name);
 void      symtab_scope_push   (SymbolTable*);
 void      symtab_scope_pop    (SymbolTable*);
+int       symtab_new_vindex   (SymbolTable*);
+Symbol*   symtab_find         (SymbolTable*, const char* name);

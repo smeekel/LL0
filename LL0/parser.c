@@ -65,7 +65,6 @@ int parser_generate(Parser* p)
 
   p->root = pStatements(p);
   if( !p->root ) return ERROR;
-  node_print_tree(p->root);
 
   return SUCCESS;
 }

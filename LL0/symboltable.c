@@ -48,6 +48,9 @@ Symbol* newSymbol()
 {
   Symbol* symbol = (Symbol*)malloc(sizeof(Symbol));
   string_initialize(&symbol->name);
+  llist_node_initialize(&symbol->listData);
+  symbol->scope   = 0;
+  symbol->vindex  = 0;
   return symbol;
 }
 
@@ -77,6 +80,28 @@ void symtab_scope_pop(SymbolTable* p)
       deleteSymbol(symbol);
     }
   }
-
 }
 
+int symtab_new_vindex(SymbolTable* p)
+{
+  return ++p->lastVIndex;
+}
+
+Symbol* symtab_find(SymbolTable* p, const char* name)
+{
+  Symbol* bestCandidate = NULL;
+
+  for( LListNode* i=p->symbols.first ; i ; i=i->next )
+  {
+    Symbol* symbol = (Symbol*)i;
+    if( string_compare_cstr(&symbol->name, name)==0 )
+    {
+      if( !bestCandidate || symbol->scope>bestCandidate->scope )
+      {
+        bestCandidate = symbol;
+      }
+    }
+  }
+
+  return bestCandidate;
+}

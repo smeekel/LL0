@@ -25,6 +25,7 @@ void main()
     printf("IRGEN ERROR: %s\n", errstate_getmessage((PError)&irgen));
     goto shutdown;
   }
+  irgen_print(&irgen);
 
 shutdown:
   irgen_terminate(&irgen);
