@@ -144,6 +144,7 @@
     <ClCompile Include="errsatate.c" />
     <ClCompile Include="InputStream.c" />
     <ClCompile Include="irgenerator.c" />
+    <ClCompile Include="irprint.c" />
     <ClCompile Include="lexer.c" />
     <ClCompile Include="llist.c" />
     <ClCompile Include="main.c" />

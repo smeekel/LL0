@@ -71,14 +71,18 @@ void symtab_scope_pop(SymbolTable* p)
 {
   p->currentScope--;
 
-  for( LListNode* i=p->symbols.first ; i ; i=i->next )
+  for( LListNode* i=p->symbols.first ; i ; )
   {
-    Symbol* symbol = (Symbol*)i;
+    Symbol*     symbol  = (Symbol*)i;
+    LListNode*  next    = i->next;
+
     if( symbol->scope>p->currentScope )
     {
       llist_remove(&p->symbols, (LListNode*)symbol);
       deleteSymbol(symbol);
     }
+
+    i = next;
   }
 }
 

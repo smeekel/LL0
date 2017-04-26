@@ -201,7 +201,7 @@ Node* pReturnStatement(Parser* p)
     ASSERT(expr);
     EXPECT(T_SEMICOLON);
   }
-  return expr;
+  return node_alloc1(N_RETURN, expr);
 
 error:
   node_delete_tree(expr);

@@ -17,7 +17,7 @@ else
   1 * 2;
 }
 
-fn a(a,b)
+fn aa(a,b)
 {
   var c = a + b;
   var c0 = 1;

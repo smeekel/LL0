@@ -4,24 +4,27 @@
 #include "node.h"
 
 
-static int    gBlock      (IRGenerator*, const Node*);
-static int    gVar        (IRGenerator*, const Node*);
-static int    gIf         (IRGenerator*, const Node*);
-static int    gCall       (IRGenerator*, const Node*);
-static int    gFunction   (IRGenerator*, const Node*);
-static int    gReturn     (IRGenerator*, const Node*);
-static int    gEval       (IRGenerator*, const Node*);
-static int    gOperator2  (IRGenerator*, const Node*);
-static int    gLiteral    (IRGenerator*, const Node*);
-static int    gIdent      (IRGenerator*, const Node*);
-static int    gAssignment (IRGenerator*, const Node*);
+static int    gBlock                  (IRGenerator*, const Node*);
+static int    gVar                    (IRGenerator*, const Node*);
+static int    gIf                     (IRGenerator*, const Node*);
+static int    gCall                   (IRGenerator*, const Node*);
+static int    gPushCallParameters     (IRGenerator*, const Node*);
+static int    gFunction               (IRGenerator*, const Node*);
+static int    gFunctionPushParameters (IRGenerator* p, const Node* n, int* index);
+static int    gReturn                 (IRGenerator*, const Node*);
+static int    gEval                   (IRGenerator*, const Node*);
+static int    gOperator2              (IRGenerator*, const Node*);
+static int    gLiteral                (IRGenerator*, const Node*);
+static int    gIdent                  (IRGenerator*, const Node*);
+static int    gAssignment             (IRGenerator*, const Node*);
 
-static IROp*  op1         (IRGenerator*, const int type, const int A);
-static IROp*  op2         (IRGenerator*, const int type, const int A, const int B);
-static IROp*  op3         (IRGenerator*, const int type, const int A, const int B, const int C);
-static void   label       (IRGenerator*, const int id);
-static void   deleteOp    (IROp*);
-static void   printOp     (IROp*);
+static IROp*  op0             (IRGenerator*, const int type);
+static IROp*  op1             (IRGenerator*, const int type, const int A);
+static IROp*  op2             (IRGenerator*, const int type, const int A, const int B);
+static IROp*  op3             (IRGenerator*, const int type, const int A, const int B, const int C);
+static void   label           (IRGenerator*, const int id);
+static void   deleteOp        (IROp*);
+static int    countParameters (const Node*);
 
 
 #define EXCEPTION(n, format, ...) {\
@@ -55,52 +58,26 @@ int irgen_generate(IRGenerator* p, Parser* parser)
   return SUCCESS;
 }
 
-void irgen_print(IRGenerator* p)
-{
-  printf(".MODULE\n");
-  for( LListNode* n=p->ops.first ; n ; n=n->next )
-  {
-    printOp((IROp*)n);
-  }
-  printf(".MODULE-END\n");
-}
-
-void printOp(IROp* op)
-{
-  switch( op->op )
-  {
-    case NOP:     printf("  NOP\n"); break;
-    case PUSH:    printf("  PUSH    $%i\n", op->A); break;
-    case POP:     printf("  POP     #%i\n", op->A); break;
-    case MOV:     printf("  MOV     $%i, $%i\n", op->A, op->B); break;
-    case SMOV:    printf("  SMOV    #%i, $%i\n", op->A, op->B); break;
-    case LOADK:   printf("  LOADK   L%s, $%i\n", op->raw.buffer, op->B); break;
-    case CALL:    printf("  CALL    $%i, #%i\n", op->A, op->B); break;
-    case JMP:     printf("  JMP     @%i\n", op->A); break;
-    case JMPF:    printf("  JMPF    @%i <$%i>\n", op->A, op->B);
-    
-    case ADD:     printf("  ADD     $%i, $%i, $%i\n", op->A, op->B, op->C); break;
-    case SUB:     printf("  SUB     $%i, $%i, $%i\n", op->A, op->B, op->C); break;
-    case MUL:     printf("  MUL     $%i, $%i, $%i\n", op->A, op->B, op->C); break;
-    case DIV:     printf("  DIV     $%i, $%i, $%i\n", op->A, op->B, op->C); break;
-
-    case RET:
-      if( op->A ) printf("  RET     $%i\n", op->A); 
-      else        printf("  RET\n");
-      break;
-
-    case LABEL:   printf("%i:\n", op->A); break;
-
-    default:
-      printf("  (%02X)\n", op->op);
-      break;
-  }
-}
-
 static void deleteOp(IROp* op)
 {
   string_terminate(&op->raw);
   free(op);
+}
+
+IROp* op0(IRGenerator* p, const int type)
+{
+  IROp* op = (IROp*)malloc(sizeof(IROp));
+  string_initialize(&op->raw);
+  llist_node_initialize((LListNode*)op);
+
+  op->op      = type;
+  op->A       = 0;
+  op->B       = 0;
+  op->C       = 0;
+  op->linkup  = NULL;
+  llist_add_end(&p->ops, (LListNode*)op);
+
+  return op;
 }
 
 IROp* op1(IRGenerator* p, const int type, const int A)
@@ -232,16 +209,115 @@ int gIf(IRGenerator* p, const Node* n)
 
 int gFunction(IRGenerator* p, const Node* n)
 {
+  const Node* ident   = n->A;
+  const Node* params  = n->B;
+  const Node* body    = n->C;
+
+  const Symbol* function = symtab_new(&p->symtab, ident->raw.buffer);
+  if( !function )
+    EXCEPTION(n, "Duplicate variable name [%s]", ident->raw.buffer);
+
+  symtab_scope_push(&p->symtab);
+  label(p, function->vindex);
+
+  int index = 0;
+  ASSERT( gFunctionPushParameters(p, params, &index) );
+  gBlock(p, body);
+  op0(p, RET);
+
+  symtab_scope_pop(&p->symtab);
+
   return SUCCESS;
+
+error:
+  return ERROR;
+}
+
+int gFunctionPushParameters(IRGenerator* p, const Node* n, int* index)
+{
+  if( n->type==N_NEXT )
+  {
+    ASSERT( gFunctionPushParameters(p, n->A, index) );
+    ASSERT( gFunctionPushParameters(p, n->B, index) );
+  }
+  else if( n->type==N_IDENT )
+  {
+    Symbol* sym = symtab_new(&p->symtab, n->raw.buffer);
+    if( !sym )
+      EXCEPTION(n, "Duplicate variable name [%s]", n->raw.buffer);
+    op2(p, SMOV, (*index)++, sym->vindex);
+  }
+  else
+  {
+    EXCEPTION(n, "Unsupported parameter type");
+  }
+
+  return SUCCESS;
+
+error:
+  return ERROR;
 }
 
 int gCall(IRGenerator* p, const Node* n)
 {
+  const Node* ident = n->A;
+  const int   temp  = symtab_new_vindex(&p->symtab);
+
+  if( ident->type!=N_IDENT )
+    EXCEPTION(n, "(ICE) N_CALL.A != N_IDENT");
+
+  Symbol* symbol = symtab_new(&p->symtab, ident->raw.buffer);
+  if( !symbol )
+    EXCEPTION(ident, "Duplicate identifier [%s]", ident->raw.buffer);
+
+  const int count = countParameters(n->B);
+  ASSERT( gPushCallParameters(p, n->B) );
+
+  op2(p, CALL, symbol->vindex, count);
+  op2(p, SMOV, 0, temp);
+  op1(p, POP, count+1);
+
+  return temp;
+
+error:
+  return ERROR;
+}
+
+int gPushCallParameters(IRGenerator* p, const Node* n)
+{
+  if( n->type==N_NEXT )
+  {
+    gPushCallParameters(p, n->A);
+    gPushCallParameters(p, n->B);
+  }
+  else
+  {
+    const int temp = gEval(p, n);
+    ASSERT( temp );
+    op1(p, PUSH, temp);
+  }
+
   return SUCCESS;
+
+error:
+  return ERROR;
 }
 
 int gReturn(IRGenerator* p, const Node* n)
 {
+  const Node* expr = n->A;
+
+  if( expr )
+  {
+    const int temp = gEval(p, expr);
+    op1(p, PUSH, temp);
+    op1(p, RET, 1);
+  }
+  else
+  {
+    op0(p, RET);
+  }
+
   return SUCCESS;
 }
 
@@ -351,4 +427,16 @@ int gIdent(IRGenerator* p, const Node* n)
 
 error:
   return ERROR;
+}
+
+int countParameters(const Node* n)
+{
+  if( n->type==N_NEXT )
+  {
+    return countParameters(n->A) + countParameters(n->B);
+  }
+  else
+  {
+    return 1;
+  }
 }
