@@ -25,6 +25,7 @@ static IROp*  op3             (IRGenerator*, const int type, const int A, const 
 static void   label           (IRGenerator*, const int id);
 static void   deleteOp        (IROp*);
 static int    countParameters (const Node*);
+static int    patchRegisters  (IRGenerator*);
 
 
 #define EXCEPTION(n, format, ...) {\
@@ -32,7 +33,8 @@ static int    countParameters (const Node*);
   goto error; \
 }
 
-#define ASSERT( x )  { if( (x)==ERROR ) goto error; }
+#define ASSERT( x )   { if( (x)==ERROR ) goto error; }
+#define NEW_LABEL(p)  ( ++(p)->labelIndex )
 
 
 int irgen_initialize(IRGenerator* p)
@@ -40,6 +42,7 @@ int irgen_initialize(IRGenerator* p)
   errstate_initialize(&p->errors);
   symtab_initialize(&p->symtab);
   llist_initialize(&p->ops, (llistNodeDelete)deleteOp);
+  p->labelIndex = 0;
   return SUCCESS;
 }
 
@@ -55,6 +58,16 @@ int irgen_generate(IRGenerator* p, Parser* parser)
 {
   if( !gBlock(p, parser->root) )
     return ERROR;
+  if( !patchRegisters(p) )
+    return ERROR;
+
+  return SUCCESS;
+}
+
+int patchRegisters(IRGenerator* p)
+{
+  //const int localCount = p->
+
   return SUCCESS;
 }
 
@@ -186,20 +199,20 @@ int gIf(IRGenerator* p, const Node* n)
   const Node* onFalse = n->C;
 
   const int condTemp    = gEval(p, cond);
-  const int labelFalse  = symtab_new_vindex(&p->symtab);
+  const int labelFalse  = NEW_LABEL(p);
 
   op2(p, JMPF, labelFalse, condTemp);
   gBlock(p, onTrue);
 
   if( !onFalse )
   {
-    label(p, condTemp);
+    label(p, labelFalse);
   }
   else
   {
-    const int labelExit = symtab_new_vindex(&p->symtab);
+    const int labelExit = NEW_LABEL(p);
     op1   (p, JMP, labelExit);
-    label (p, condTemp);
+    label (p, labelFalse);
     gBlock(p, onFalse);
     label (p, labelExit);
   }
@@ -213,9 +226,11 @@ int gFunction(IRGenerator* p, const Node* n)
   const Node* params  = n->B;
   const Node* body    = n->C;
 
-  const Symbol* function = symtab_new(&p->symtab, ident->raw.buffer);
+  Symbol* function = symtab_new(&p->symtab, ident->raw.buffer);
   if( !function )
     EXCEPTION(n, "Duplicate variable name [%s]", ident->raw.buffer);
+  function->flags   = F_FUNCTION;
+  function->vindex  = NEW_LABEL(p);
 
   symtab_scope_push(&p->symtab);
   label(p, function->vindex);
@@ -266,16 +281,18 @@ int gCall(IRGenerator* p, const Node* n)
   if( ident->type!=N_IDENT )
     EXCEPTION(n, "(ICE) N_CALL.A != N_IDENT");
 
-  Symbol* symbol = symtab_new(&p->symtab, ident->raw.buffer);
+  Symbol* symbol = symtab_find(&p->symtab, ident->raw.buffer);
   if( !symbol )
-    EXCEPTION(ident, "Duplicate identifier [%s]", ident->raw.buffer);
+    EXCEPTION(ident, "Undefined function [%s]", ident->raw.buffer);
+  if( !(symbol->flags&F_FUNCTION) )
+    EXCEPTION(ident, "Symbol [%s] is not a funciton", ident->raw.buffer);
 
   const int count = countParameters(n->B);
   ASSERT( gPushCallParameters(p, n->B) );
 
   op2(p, CALL, symbol->vindex, count);
   op2(p, SMOV, 0, temp);
-  op1(p, POP, count+1);
+  op1(p, DISCARD, count+1);
 
   return temp;
 

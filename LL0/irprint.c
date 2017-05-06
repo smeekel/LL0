@@ -2,32 +2,42 @@
 #include "irgenerator.h"
 
 
-static void printOp(IROp*);
+static void printOp     (const IROp*);
+static void printSymbol (const Symbol*);
 
 
 void irgen_print(IRGenerator* p)
 {
   printf(".MODULE\n");
+
+  for( LListNode* n=p->symtab.symbols.first ; n ; n=n->next )
+  {
+    printSymbol((Symbol*)n);
+  }
+
+  printf("\nentry:\n");
   for( LListNode* n=p->ops.first ; n ; n=n->next )
   {
     printOp((IROp*)n);
   }
+
   printf(".MODULE-END\n");
 }
 
-void printOp(IROp* op)
+void printOp(const IROp* op)
 {
   switch( op->op )
   {
     case NOP:     printf("  NOP\n"); break;
     case PUSH:    printf("  PUSH    $%i\n", op->A); break;
-    case POP:     printf("  POP     #%i\n", op->A); break;
+  //case POP:     printf("  POP     #%i\n", op->A); break;
+    case DISCARD: printf("  DISCARD %i\n",  op->A); break;
     case MOV:     printf("  MOV     $%i, $%i\n", op->A, op->B); break;
     case SMOV:    printf("  SMOV    #%i, $%i\n", op->A, op->B); break;
-    case LOADK:   printf("  LOADK   L%s, $%i\n", op->raw.buffer, op->B); break;
-    case CALL:    printf("  CALL    $%i, #%i\n", op->A, op->B); break;
-    case JMP:     printf("  JMP     @%i\n", op->A); break;
-    case JMPF:    printf("  JMPF    @%i <$%i>\n", op->A, op->B);
+    case LOADK:   printf("  LOADK   '%s', $%i\n", op->raw.buffer, op->B); break;
+    case CALL:    printf("  CALL    @L%i, #%i\n", op->A, op->B); break;
+    case JMP:     printf("  JMP     @L%i\n", op->A); break;
+    case JMPF:    printf("  JMPF    @L%i <$%i>\n", op->A, op->B);
     
     case ADD:     printf("  ADD     $%i, $%i, $%i\n", op->A, op->B, op->C); break;
     case SUB:     printf("  SUB     $%i, $%i, $%i\n", op->A, op->B, op->C); break;
@@ -39,10 +49,21 @@ void printOp(IROp* op)
       else        printf("  RET\n");
       break;
 
-    case LABEL:   printf("%i:\n", op->A); break;
+    case LABEL:   printf("L%i:\n", op->A); break;
 
     default:
       printf("  (%02X)\n", op->op);
       break;
   }
+}
+
+void printSymbol(const Symbol* s)
+{
+  printf
+  (
+    "  .sym %c[%s]:%i\n",
+    s->flags&F_FUNCTION ? 'F' : ' ',
+    s->name.buffer,
+    s->vindex
+  );
 }

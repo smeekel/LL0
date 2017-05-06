@@ -51,6 +51,7 @@ Symbol* newSymbol()
   llist_node_initialize(&symbol->listData);
   symbol->scope   = 0;
   symbol->vindex  = 0;
+  symbol->flags   = 0;
   return symbol;
 }
 

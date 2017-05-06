@@ -9,7 +9,8 @@ enum IROps
   LABEL,
 
   PUSH,
-  POP,
+//POP,
+  DISCARD,
   MOV,
   SMOV,
   LOADK,

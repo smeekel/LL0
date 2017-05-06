@@ -4,9 +4,13 @@ var b = 3;
 var c = a + b;
 var d = a + b * c;
 
+fn print(a)
+{
+  return 1;
+}
+
 //a = (b = 1);
 print(a, b, c, d);
-a = addTest(a);
 
 if( 1 )
 {
@@ -23,3 +27,4 @@ fn aa(a,b)
   var c0 = 1;
   return c;
 }
+

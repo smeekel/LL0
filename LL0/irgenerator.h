@@ -11,6 +11,7 @@ typedef struct
   ErrState      errors;
   SymbolTable   symtab;
   LList         ops;
+  int           labelIndex;
 } IRGenerator;
 
 int   irgen_initialize  (IRGenerator*);
