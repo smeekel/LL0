@@ -6,6 +6,7 @@
 
 static int    gBlock                  (IRGenerator*, const Node*);
 static int    gVar                    (IRGenerator*, const Node*);
+static int    gImport                 (IRGenerator*, const Node*);
 static int    gIf                     (IRGenerator*, const Node*);
 static int    gCall                   (IRGenerator*, const Node*);
 static int    gPushCallParameters     (IRGenerator*, const Node*);
@@ -161,6 +162,7 @@ static int gBlock(IRGenerator* p, const Node* n)
     case N_IF:        ASSERT( gIf(p, n)       ) break;
     case N_FUNCTION:  ASSERT( gFunction(p, n) ) break;
     case N_RETURN:    ASSERT( gReturn(p, n)   ) break;
+    case N_IMPORT:    ASSERT( gImport(p, n)   ) break;
     default:          ASSERT( gEval(p, n)     ) break;
   }
 
@@ -168,6 +170,11 @@ static int gBlock(IRGenerator* p, const Node* n)
 
 error:
   return ERROR;
+}
+
+int gImport(IRGenerator* p, const Node* n)
+{
+  return SUCCESS;
 }
 
 int gVar(IRGenerator* p, const Node* n)
@@ -231,6 +238,8 @@ int gFunction(IRGenerator* p, const Node* n)
     EXCEPTION(n, "Duplicate variable name [%s]", ident->raw.buffer);
   function->flags   = F_FUNCTION;
   function->vindex  = NEW_LABEL(p);
+
+  if( n->flags&NF_FN_PUBLIC ) function->flags |= F_PUBLIC;
 
   symtab_scope_push(&p->symtab);
   label(p, function->vindex);

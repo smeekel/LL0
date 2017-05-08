@@ -167,6 +167,13 @@ int read_literal(Lexer* p)
   int type = T_IDENT;
   switch( p->raw.buffer[0] )
   {
+    case 'a':
+    {
+      if( COMPARE("as") )
+        type = T_AS;
+      break;
+    }
+
     case 'e':
     {
       if( COMPARE("else") )
@@ -176,9 +183,7 @@ int read_literal(Lexer* p)
 
     case 'f':
     {
-      if( COMPARE("false") )
-        type = T_FALSE;
-      else if( COMPARE("for") )
+      if( COMPARE("for") )
         type = T_FOR;
       else if( COMPARE("fn") )
         type = T_FUNCTION;
@@ -191,8 +196,13 @@ int read_literal(Lexer* p)
         type = T_IF;
       else if( COMPARE("import") )
         type = T_IMPORT;
-      else if( COMPARE("into") )
-        type = T_INTO;
+      break;
+    }
+
+    case 'p':
+    {
+      if( COMPARE("public") )
+        type = T_PUBLIC;
       break;
     }
 
@@ -201,13 +211,6 @@ int read_literal(Lexer* p)
       if( COMPARE("return") )
         type = T_RETURN;
       break;
-    }
-
-    case 't':
-    {
-      if( COMPARE("true") )
-        type = T_TRUE;
-       break;
     }
 
     case 'v':

@@ -12,6 +12,7 @@ enum NodeTypes
   N_CALL,
   N_ANONYMOUS,
   N_NEXT,
+  N_IMPORT,
 
   N_N_LITERAL,
   N_IDENT,
@@ -29,6 +30,10 @@ enum NodeTypes
   N_DIV,
 };
 
+enum NodeFlags
+{
+  NF_FN_PUBLIC = 1
+};
 
 typedef struct Node
 {
@@ -37,6 +42,7 @@ typedef struct Node
   int       token_type;
   uint32_t  line;
   uint32_t  column;
+  uint32_t  flags;
 
   struct Node*  A;
   struct Node*  B;

@@ -27,6 +27,7 @@ Node* node_alloc1(const int type, Node* A)
 {
   Node* n = node_alloc0(type);
   n->A = A;
+  n->flags = 0;
   return n;
 }
 
@@ -35,6 +36,7 @@ Node* node_alloc2(const int type, Node* A, Node* B)
   Node* n = node_alloc0(type);
   n->A = A;
   n->B = B;
+  n->flags = 0;
   return n;
 }
 
@@ -44,6 +46,7 @@ Node* node_alloc3(const int type, Node* A, Node* B, Node* C)
   n->A = A;
   n->B = B;
   n->C = C;
+  n->flags = 0;
   return n;
 }
 

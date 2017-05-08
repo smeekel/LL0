@@ -6,6 +6,7 @@ enum SymbolFlags
 {
   F_NONE = 0,
   F_FUNCTION = 1,
+  F_PUBLIC = 2,
 };
 
 

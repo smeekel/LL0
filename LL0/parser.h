@@ -6,7 +6,7 @@
 
 typedef struct
 {
-  ErrState    error;
+  ErrState    errors;
   Lexer       lexer;
   Node*       root;
 } Parser;

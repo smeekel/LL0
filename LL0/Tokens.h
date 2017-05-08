@@ -50,12 +50,10 @@ enum Tokens
   T_RETURN,
   T_FOR,
   T_WHILE,
-  T_TRUE,
-  T_FALSE,
   T_FUNCTION,
   T_VAR,
   T_IMPORT,
-  T_INTO,
-  T_CONST,
+  T_AS,
+  T_PUBLIC,
 };
 

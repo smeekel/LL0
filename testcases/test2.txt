@@ -1,10 +1,12 @@
+import test3 as herp;
+import test3;
 
 var a = 1;
 var b = 3;
 var c = a + b;
 var d = a + b * c;
 
-fn print(a)
+public fn print(a)
 {
   return 1;
 }

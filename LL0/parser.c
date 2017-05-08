@@ -7,8 +7,10 @@ static Node*  pStatement            (Parser*);
 static Node*  pExpressionStatement  (Parser*);
 static Node*  pBlockStatement       (Parser*);
 static Node*  pReturnStatement      (Parser*);
+static Node*  pImportStatement      (Parser*);
 static Node*  pVariableDefinition   (Parser*);
 static Node*  pFunction             (Parser*);
+static Node*  pPublicFunction       (Parser*);
 static Node*  pParameterDefinition  (Parser*);
 static Node*  pIfStatement          (Parser*);
 static Node*  pForStatement         (Parser*);
@@ -29,7 +31,13 @@ static Node*  pEnd    = &NodeEnd;
 
 
 #define SETERROR(format, ...) \
-  errstate_adderror(&p->error, "[%d:%d] " #format, p->lexer.current_line, p->lexer.current_column, __VA_ARGS__)
+  errstate_adderror(&p->errors, "[%d:%d] " #format, p->lexer.current_line, p->lexer.current_column, __VA_ARGS__)
+
+#define EXCEPTION(format, ...) {\
+  errstate_adderror(&p->errors, "[%d:%d] " #format, p->lexer.current_line, p->lexer.current_column, __VA_ARGS__); \
+  goto error; \
+}
+
 #define TOKEN()     (p->lexer.current_token)
 #define PEEK()      (p->lexer.token)
 #define ACCEPT(t)   ( accept(p, (t)) )
@@ -40,7 +48,7 @@ static Node*  pEnd    = &NodeEnd;
 
 int parser_initialize(Parser* p, const char* filename)
 {
-  errstate_initialize(&p->error);
+  errstate_initialize(&p->errors);
   p->root = NULL;
 
   if( !lexer_initialize(&p->lexer, filename) )
@@ -53,7 +61,7 @@ int parser_initialize(Parser* p, const char* filename)
 int parser_terminate(Parser* p)
 {
   lexer_terminate(&p->lexer);
-  errstate_terminate(&p->error);
+  errstate_terminate(&p->errors);
   node_delete_tree(p->root);
 
   return SUCCESS;
@@ -117,18 +125,52 @@ Node* pStatement(Parser* p)
     return pIfStatement(p);
   else if( ACCEPT(T_FUNCTION) )
     return pFunction(p);
+  else if( ACCEPT(T_PUBLIC) )
+    return pPublicFunction(p);
   else if( ACCEPT(T_RETURN) )
     return pReturnStatement(p);
   else if( ACCEPT(T_VAR) )
     return pVariableDefinition(p);
   else if( ACCEPT(T_FOR) )
     return pForStatement(p);
+  else if( ACCEPT(T_IMPORT) )
+    return pImportStatement(p);
   else if( ACCEPT(T_LBRACE) )
     return pBlockStatement(p);
   else if( isExpression(p) )
     return pExpressionStatement(p);
 
   return pEnd;
+}
+
+Node* pImportStatement(Parser* p)
+{
+  Node* name = NULL;
+  Node* as   = NULL;
+
+  if( TOKEN()!=T_IDENT )
+    EXCEPTION(p, "Missing import name");
+
+  name = node_alloc0(N_IDENT);
+  node_set_token(p, name);
+  NEXT();
+
+  if( ACCEPT(T_AS) )
+  {
+    if( TOKEN()!=T_IDENT )
+      EXCEPTION(p, "Invalid alias name");
+
+    as = node_alloc0(N_IDENT);
+    node_set_token(p, as);
+    NEXT();
+  }
+
+  EXPECT(T_SEMICOLON);
+
+  return node_alloc2(N_IMPORT, name, as);
+
+error:
+  return NULL;
 }
 
 Node* pForStatement(Parser* p)
@@ -222,11 +264,22 @@ error:
   return NULL;
 }
 
+Node* pPublicFunction(Parser* p)
+{
+  EXPECT(T_FUNCTION);
+  Node* fn = pFunction(p);
+  fn->flags |= NF_FN_PUBLIC;
+  return fn;
+
+error:
+  return NULL;
+}
+
 Node* pFunction(Parser* p)
 {
-  Node* name    = NULL;
-  Node* params  = NULL;
-  Node* body    = NULL;
+  Node* name      = NULL;
+  Node* params    = NULL;
+  Node* body      = NULL;
 
 
   if( TOKEN()==T_IDENT )

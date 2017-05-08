@@ -61,7 +61,8 @@ void printSymbol(const Symbol* s)
 {
   printf
   (
-    "  .sym %c[%s]:%i\n",
+    "  .sym %c%c[%s]:%i\n",
+    s->flags&F_PUBLIC   ? 'P' : ' ',
     s->flags&F_FUNCTION ? 'F' : ' ',
     s->name.buffer,
     s->vindex
