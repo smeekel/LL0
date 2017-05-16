@@ -2,8 +2,9 @@
 #include "irgenerator.h"
 
 
-static void printOp     (const IROp*);
-static void printSymbol (const Symbol*);
+static void printFunction (const IRFunction*);
+static void printOp       (const IROp*);
+static void printSymbol   (const Symbol*);
 
 
 void irgen_print(IRGenerator* p)
@@ -15,13 +16,29 @@ void irgen_print(IRGenerator* p)
     printSymbol((Symbol*)n);
   }
 
-  printf("\nentry:\n");
-  for( LListNode* n=p->ops.first ; n ; n=n->next )
-  {
-    printOp((IROp*)n);
-  }
+  //printf("\nentry:\n");
+  printf("\n");
+
+  for( LListNode* n=p->functions.first ; n ; n=n->next )
+    printFunction((IRFunction*)n);
+
 
   printf(".MODULE-END\n");
+}
+
+void printFunction(const IRFunction* fn)
+{
+  printf
+  (
+    "\n%s:\n", 
+    string_is_empty(&fn->name)
+    ? "_entry"
+    : fn->name.buffer
+  );
+
+  for( LListNode* n=fn->ops.first ; n ; n=n->next )
+    printOp((IROp*)n);
+
 }
 
 void printOp(const IROp* op)
@@ -33,9 +50,9 @@ void printOp(const IROp* op)
   //case POP:     printf("  POP     #%i\n", op->A); break;
     case DISCARD: printf("  DISCARD %i\n",  op->A); break;
     case MOV:     printf("  MOV     $%i, $%i\n", op->A, op->B); break;
-    case SMOV:    printf("  SMOV    #%i, $%i\n", op->A, op->B); break;
+    case SMOV:    printf("  SMOV    %i, $%i\n", op->A, op->B); break;
     case LOADK:   printf("  LOADK   '%s', $%i\n", op->raw.buffer, op->B); break;
-    case CALL:    printf("  CALL    @L%i, #%i\n", op->A, op->B); break;
+    case CALL:    printf("  CALL    @L%i, %i\n", op->A, op->B); break;
     case JMP:     printf("  JMP     @L%i\n", op->A); break;
     case JMPF:    printf("  JMPF    @L%i <$%i>\n", op->A, op->B);
     
@@ -45,7 +62,7 @@ void printOp(const IROp* op)
     case DIV:     printf("  DIV     $%i, $%i, $%i\n", op->A, op->B, op->C); break;
 
     case RET:
-      if( op->A ) printf("  RET     $%i\n", op->A); 
+      if( op->A ) printf("  RET     %i\n", op->A); 
       else        printf("  RET\n");
       break;
 

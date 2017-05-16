@@ -11,7 +11,7 @@ void main()
   IRGenerator irgen;
 
 
-  parser_initialize(&parser, "testcases/test2.txt");
+  parser_initialize(&parser, "testcases/test3.txt");
   irgen_initialize(&irgen);
 
 

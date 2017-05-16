@@ -9,6 +9,7 @@ static int  next                (Lexer*);
 static int  nextchar            (Lexer*);
 static int  eat_comment         (Lexer*);
 static void newline             (Lexer*);
+static int  read_string         (Lexer*);
 static int  read_number         (Lexer*);
 static int  read_literal        (Lexer*);
 static int  read_hex_number     (Lexer*);
@@ -106,6 +107,10 @@ restart:
       newline(p);
       nextchar(p);
       goto restart;
+
+    case '\'':
+    case '\"':
+      return read_string(p);
 
     case '/':
     {
@@ -236,6 +241,51 @@ int read_literal(Lexer* p)
 
   return type;
 }
+
+int read_string(Lexer* p)
+{
+  const int opening_char = p->c;
+
+  string_clear(&p->raw);
+  nextchar(p);
+
+  int escape = 0;
+  while( true )
+  {
+    if( escape )
+    {
+      switch( C )
+      {
+        case '\'': string_push(&p->raw, '\''); break;
+        case '\"': string_push(&p->raw, '\"'); break;
+        case '\\': string_push(&p->raw, '\\'); break;
+        default:
+          errstate_adderror(&p->error, "[%d:%d] Invalid escape character [\\%c]", p->line, p->column, C);
+          return T_ERROR;
+      }
+
+      escape = 0;
+    }
+    else if( C=='\\' )
+    {
+      escape = 1;
+    }
+    else if( C==opening_char )
+    {
+      nextchar(p);
+      break;
+    }
+    else
+    {
+      string_push(&p->raw, C);
+    }
+    nextchar(p);
+  }
+
+
+  return T_STRING;
+}
+
 
 int read_number(Lexer* p)
 {

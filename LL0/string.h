@@ -18,3 +18,4 @@ int     string_compare        (const String*, const String*);
 int     string_copy           (const String*, String*);
 int     string_copy_cstr      (String*, const char*);
 int     string_length         (const String*);
+int     string_is_empty       (const String*);

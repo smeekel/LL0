@@ -18,6 +18,7 @@ static Node*  pAssignmentExpression (Parser*);
 static Node*  pExpression           (Parser*);
 static Node*  pTerm                 (Parser*);
 static Node*  pFactor               (Parser*);
+static Node*  pIdent                (Parser*);
 static Node*  pFunctionCall         (Parser*);
 static Node*  pExpressionList       (Parser*);
 
@@ -33,8 +34,13 @@ static Node*  pEnd    = &NodeEnd;
 #define SETERROR(format, ...) \
   errstate_adderror(&p->errors, "[%d:%d] " #format, p->lexer.current_line, p->lexer.current_column, __VA_ARGS__)
 
-#define EXCEPTION(format, ...) {\
+#define EXCEPTIONF(format, ...) {\
   errstate_adderror(&p->errors, "[%d:%d] " #format, p->lexer.current_line, p->lexer.current_column, __VA_ARGS__); \
+  goto error; \
+}
+
+#define EXCEPTION(message) {\
+  errstate_adderror(&p->errors, "[%d:%d] " #message, p->lexer.current_line, p->lexer.current_column); \
   goto error; \
 }
 
@@ -44,6 +50,7 @@ static Node*  pEnd    = &NodeEnd;
 #define EXPECT(t)   { if( !expect(p, (t)) ) goto error; }
 #define NEXT()      { lexer_next(&p->lexer); }
 #define ASSERT(x)   { if( !(x) ) goto error; }
+#define ISEND()     ( p->lexer.token==T_ERROR || p->lexer.token==T_EOF )
 
 
 int parser_initialize(Parser* p, const char* filename)
@@ -149,7 +156,7 @@ Node* pImportStatement(Parser* p)
   Node* as   = NULL;
 
   if( TOKEN()!=T_IDENT )
-    EXCEPTION(p, "Missing import name");
+    EXCEPTIONF(p, "Missing import name");
 
   name = node_alloc0(N_IDENT);
   node_set_token(p, name);
@@ -158,7 +165,7 @@ Node* pImportStatement(Parser* p)
   if( ACCEPT(T_AS) )
   {
     if( TOKEN()!=T_IDENT )
-      EXCEPTION(p, "Invalid alias name");
+      EXCEPTIONF(p, "Invalid alias name");
 
     as = node_alloc0(N_IDENT);
     node_set_token(p, as);
@@ -502,8 +509,9 @@ Node* pFactor(Parser* p)
     case T_BIN_NUMBER:
     case T_HEX_NUMBER:
     case T_OCT_NUMBER:
+    case T_STRING:
     {
-      n = node_alloc0(N_N_LITERAL);
+      n = node_alloc0(N_LITERAL);
       node_set_token(p, n);
       NEXT();
       break;
@@ -511,23 +519,7 @@ Node* pFactor(Parser* p)
 
     case T_IDENT:
     {
-      if( PEEK()==T_LPREN )
-      {
-        //
-        // Function call
-        //
-        n = pFunctionCall(p);
-        ASSERT(n);
-      }
-      else
-      {
-        //
-        // Variable
-        //
-        n = node_alloc0(N_IDENT);
-        node_set_token(p, n);
-        NEXT();
-      }
+      n = pIdent(p);
       break;
     }
 
@@ -544,6 +536,42 @@ Node* pFactor(Parser* p)
     default:
       SETERROR("Unexpected input");
       goto error;
+  }
+
+  return n;
+
+error:
+  node_delete_tree(n);
+  return NULL;
+}
+
+Node* pIdent(Parser* p)
+{
+  Node* n = NULL;
+
+  if( PEEK()==T_LPREN )
+  {
+    //
+    // Function call
+    //
+    n = pFunctionCall(p);
+    ASSERT(n);
+  }
+  else
+  {
+    //
+    // Variable
+    //
+    n = node_alloc0(N_IDENT);
+    node_set_token(p, n);
+    NEXT();
+
+    if( ACCEPT(T_DOT) )
+    {
+      Node* sub = pIdent(p);
+      ASSERT(sub);
+      n = node_alloc2(N_DEREF, n, sub);
+    }
   }
 
   return n;
@@ -581,7 +609,11 @@ Node* pExpressionList(Parser* p)
 
   while( true )
   {
-    if( ACCEPT(T_RPREN) )
+    if( TOKEN()==T_ERROR )
+      EXCEPTION("Input error")
+    else if( TOKEN()==T_EOF )
+      EXCEPTION("Unexpected eof")
+    else if( ACCEPT(T_RPREN) )
       break;
 
     if( isExpression(p) )
@@ -618,6 +650,7 @@ bool isExpression(Parser* p)
     case T_OCT_NUMBER:
     case T_LPREN:
     case T_IDENT:
+    case T_STRING:
       return true;
 
     default: return false;

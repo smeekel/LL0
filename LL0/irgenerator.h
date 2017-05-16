@@ -6,12 +6,23 @@
 #include "IROp.h"
 
 
+typedef struct 
+{
+  LListNode node;
+  String    name;
+  LList     ops;
+} IRFunction;
+
 typedef struct
 {
   ErrState      errors;
   SymbolTable   symtab;
-  LList         ops;
   int           labelIndex;
+
+  LList         functions;
+  IRFunction*   current;
+  IRFunction*   global;
+
 } IRGenerator;
 
 int   irgen_initialize  (IRGenerator*);

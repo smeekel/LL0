@@ -6,17 +6,18 @@
 
 enum NodeTypes
 {
-  N_GLUE,
+  N_GLUE = 1,
   N_BLOCK,
   N_EXPRESSION,
   N_CALL,
   N_ANONYMOUS,
   N_NEXT,
-  N_IMPORT,
+  N_DEREF,
 
-  N_N_LITERAL,
+  N_LITERAL,
   N_IDENT,
 
+  N_IMPORT,
   N_FUNCTION,
   N_VAR,
   N_RETURN,

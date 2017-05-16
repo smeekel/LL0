@@ -75,6 +75,11 @@ int string_copy_cstr(String* dst, const char* src)
   return SUCCESS;
 }
 
+int string_is_empty(const String* s)
+{
+  return (s->buffer==NULL) || (s->offset==0) || (s->length==0) ;
+}
+
 int copy(String* dst, const char* src, const size_t size)
 {
   if( size>0 && dst->length<size+1 )
@@ -96,3 +101,4 @@ int copy(String* dst, const char* src, const size_t size)
 
   return SUCCESS;
 }
+
