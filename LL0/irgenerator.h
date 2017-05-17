@@ -1,27 +1,20 @@
 #pragma once
 #include "errstate.h"
 #include "parser.h"
-#include "symboltable.h"
+#include "module.h"
 #include "llist.h"
 #include "IROp.h"
 
 
-typedef struct 
-{
-  LListNode node;
-  String    name;
-  LList     ops;
-} IRFunction;
-
 typedef struct
 {
   ErrState      errors;
-  SymbolTable   symtab;
   int           labelIndex;
 
-  LList         functions;
-  IRFunction*   current;
-  IRFunction*   global;
+  Module        module;
+
+  Function*     current;
+  Function*     global;
 
 } IRGenerator;
 

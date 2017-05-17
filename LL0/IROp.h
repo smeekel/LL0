@@ -9,7 +9,6 @@ enum IROps
   LABEL,
 
   PUSH,
-//POP,
   DISCARD,
   MOV,
   SMOV,
@@ -18,6 +17,7 @@ enum IROps
   RET,
   JMP,
   JMPF,
+  GET,
 
   ADD,
   SUB,

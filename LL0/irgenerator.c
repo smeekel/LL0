@@ -16,19 +16,16 @@ static int    gReturn                 (IRGenerator*, const Node*);
 static int    gEval                   (IRGenerator*, const Node*);
 static int    gOperator2              (IRGenerator*, const Node*);
 static int    gLiteral                (IRGenerator*, const Node*);
+static int    gDeref                  (IRGenerator*, const Node*);
 static int    gIdent                  (IRGenerator*, const Node*);
 static int    gAssignment             (IRGenerator*, const Node*);
 
-static IROp*        op0                 (IRGenerator*, const int type);
-static IROp*        op1                 (IRGenerator*, const int type, const int A);
-static IROp*        op2                 (IRGenerator*, const int type, const int A, const int B);
-static IROp*        op3                 (IRGenerator*, const int type, const int A, const int B, const int C);
-static void         label               (IRGenerator*, const int id);
-static int          countParameters     (const Node*);
-
-static void         listDeleteFunction  (IRFunction*);
-static void         listDeleteOp        (IROp*);
-static IRFunction*  createFunction      (IRGenerator*, const char* name);
+static IROp*        op0               (IRGenerator*, const int type);
+static IROp*        op1               (IRGenerator*, const int type, const int A);
+static IROp*        op2               (IRGenerator*, const int type, const int A, const int B);
+static IROp*        op3               (IRGenerator*, const int type, const int A, const int B, const int C);
+static void         label             (IRGenerator*, const int id);
+static int          countParameters   (const Node*);
 
 
 #define EXCEPTIONF(n, format, ...) {\
@@ -38,20 +35,20 @@ static IRFunction*  createFunction      (IRGenerator*, const char* name);
 
 #define ASSERT( x )   { if( (x)==ERROR ) goto error; }
 #define NEW_LABEL(p)  ( ++(p)->labelIndex )
-
+#define SYMTAB        p->module.symtab
+#define IMPORTS       p->module.imports
 
 int irgen_initialize(IRGenerator* p)
 {
   errstate_initialize(&p->errors);
-  symtab_initialize(&p->symtab);
+  module_initialize(&p->module);
   p->labelIndex = 0;
 
-  llist_initialize(&p->functions, (llistNodeDelete)listDeleteFunction);
-  p->global   = createFunction(p, NULL);
+  p->global   = module_create_function(&p->module, NULL);
   p->current  = p->global;
 
 
-  Symbol* function = symtab_new(&p->symtab, "print");
+  Symbol* function = symtab_new(&p->module.symtab, "print");
   function->flags   = F_FUNCTION | F_EXTERN;
   function->vindex  = NEW_LABEL(p);
 
@@ -60,14 +57,15 @@ int irgen_initialize(IRGenerator* p)
 
 int irgen_terminate(IRGenerator* p)
 {
-  llist_terminate(&p->functions);
-  symtab_terminate(&p->symtab);
+  module_terminate(&p->module);
   errstate_terminate(&p->errors);
   return SUCCESS;
 }
 
 int irgen_generate(IRGenerator* p, Parser* parser)
 {
+  node_print_tree(parser->root);
+
   if( !gBlock(p, parser->root) )
     return ERROR;
 
@@ -77,33 +75,6 @@ int irgen_generate(IRGenerator* p, Parser* parser)
   return SUCCESS;
 }
 
-
-IRFunction* createFunction(IRGenerator* p, const char* name)
-{
-  IRFunction* fn = (IRFunction*)malloc(sizeof(IRFunction));
-
-  llist_node_initialize((LListNode*)fn);
-  llist_initialize(&fn->ops, (llistNodeDelete)listDeleteOp);
-  string_initialize(&fn->name);
-  llist_add_end(&p->functions, (LListNode*)fn);
-  
-  if( name!=NULL ) string_copy_cstr(&fn->name, name);
-
-  return fn;
-}
-
-void listDeleteOp(IROp* p)
-{
-  string_terminate(&p->raw);
-  free(p);
-}
-
-void listDeleteFunction(IRFunction* p)
-{
-  llist_terminate (&p->ops);
-  string_terminate(&p->name);
-  free(p);
-}
 
 IROp* op0(IRGenerator* p, const int type)
 {
@@ -184,16 +155,40 @@ error:
   return ERROR;
 }
 
+#define STR(x) (x->raw.buffer)
+
 int gImport(IRGenerator* p, const Node* n)
 {
+  const Node* name      = n->A;
+  const Node* alias     = n->B;
+  const char* str_name  = alias ? STR(alias) : STR(name);
+
+  //
+  // Try finding a matching symbol in the global scope
+  //
+  const Symbol* existing = symtab_find(&SYMTAB, str_name);
+  if( existing && existing->scope==0 )
+    EXCEPTIONF(n, "symbol name conflicts with import [%s]", existing->name.buffer);
+
+  Symbol* sym = symtab_new(&SYMTAB, str_name);
+  sym->flags = F_EXTERN;
+
+  if( alias )
+    imports_add_alias(&IMPORTS, STR(name), STR(alias));
+  else
+    imports_add(&IMPORTS, STR(name));
+
   return SUCCESS;
+
+error:
+  return ERROR;
 }
 
 int gVar(IRGenerator* p, const Node* n)
 {
   const Node* ident = n->A;
   const Node* expr  = n->B;
-  Symbol* sym = symtab_new(&p->symtab, ident->raw.buffer);
+  Symbol* sym = symtab_new(&SYMTAB, ident->raw.buffer);
 
   if( !sym ) 
     EXCEPTIONF(ident, "Duplicate identifier name in current score [%s]", ident->raw.buffer);
@@ -245,7 +240,7 @@ int gFunction(IRGenerator* p, const Node* n)
   const Node* params  = n->B;
   const Node* body    = n->C;
 
-  Symbol* function = symtab_new(&p->symtab, ident->raw.buffer);
+  Symbol* function = symtab_new(&SYMTAB, ident->raw.buffer);
   if( !function )
     EXCEPTIONF(n, "Duplicate variable name [%s]", ident->raw.buffer);
   function->flags   = F_FUNCTION;
@@ -253,11 +248,11 @@ int gFunction(IRGenerator* p, const Node* n)
 
   if( n->flags&NF_FN_PUBLIC ) function->flags |= F_PUBLIC;
 
-  symtab_scope_push(&p->symtab);
+  symtab_scope_push(&SYMTAB);
 
   
-  IRFunction* prev_function = p->current;
-  p->current = createFunction(p, function->name.buffer);
+  Function* prev_function = p->current;
+  p->current = module_create_function(&p->module, function->name.buffer);
   label(p, function->vindex);
 
   int index = 0;
@@ -267,7 +262,7 @@ int gFunction(IRGenerator* p, const Node* n)
   op0(p, RET);
 
   p->current = prev_function;
-  symtab_scope_pop(&p->symtab);
+  symtab_scope_pop(&SYMTAB);
 
   return SUCCESS;
 
@@ -284,7 +279,7 @@ int gFunctionPushParameters(IRGenerator* p, const Node* n, int* index)
   }
   else if( n->type==N_IDENT )
   {
-    Symbol* sym = symtab_new(&p->symtab, n->raw.buffer);
+    Symbol* sym = symtab_new(&SYMTAB, n->raw.buffer);
     if( !sym )
       EXCEPTIONF(n, "Duplicate variable name [%s]", n->raw.buffer);
 
@@ -305,12 +300,12 @@ error:
 int gCall(IRGenerator* p, const Node* n)
 {
   const Node* ident = n->A;
-  const int   temp  = symtab_new_vindex(&p->symtab);
+  const int   temp  = symtab_new_vindex(&SYMTAB);
 
   if( ident->type!=N_IDENT )
     EXCEPTIONF(n, "(ICE) N_CALL.A != N_IDENT");
 
-  Symbol* symbol = symtab_find(&p->symtab, ident->raw.buffer);
+  Symbol* symbol = symtab_find(&SYMTAB, ident->raw.buffer);
   if( !symbol )
     EXCEPTIONF(ident, "Undefined function [%s]", ident->raw.buffer);
   if( !(symbol->flags&F_FUNCTION) )
@@ -397,7 +392,7 @@ int gEval(IRGenerator* p, const Node* n)
       break;
 
     case N_DEREF:
-      ASSERT( temp = gIdent(p, n->A) );
+      ASSERT( temp = gDeref(p, n) );
       break;
 
     default:
@@ -412,7 +407,7 @@ error:
 
 int gOperator2(IRGenerator* p, const Node* n)
 {
-  const int temp  = symtab_new_vindex(&p->symtab);
+  const int temp  = symtab_new_vindex(&SYMTAB);
   const int a     = gEval(p, n->A);
   const int b     = gEval(p, n->B);
   int op;
@@ -437,7 +432,7 @@ error:
 
 int gLiteral(IRGenerator* p, const Node* n)
 {
-  const int temp = symtab_new_vindex(&p->symtab);
+  const int temp = symtab_new_vindex(&SYMTAB);
 
   IROp* op = op2(p, LOADK, 0, temp);
   string_copy(&n->raw, &op->raw);
@@ -452,9 +447,9 @@ int gAssignment(IRGenerator* p, const Node* n)
   if( lparam->type!=N_IDENT )
     EXCEPTIONF(n, "lparam must be an identifier");
 
-  const Symbol* sym = symtab_find(&p->symtab, lparam->raw.buffer);
+  const Symbol* sym = symtab_find(&SYMTAB, STR(lparam));
   if( !sym )
-    EXCEPTIONF(n, "Undefined variable [%s]", lparam->raw.buffer);
+    EXCEPTIONF(n, "Undefined variable [%s]", STR(lparam));
 
   const int tempExpr = gEval(p, rparam);
   op2(p, MOV, tempExpr, sym->vindex);
@@ -465,12 +460,32 @@ error:
   return ERROR;
 }
 
+int gDeref(IRGenerator* p, const Node* n)
+{
+  const Node* object  = n->A;
+  const Node* expr    = n->B;
+
+  if( object->type!=N_IDENT )
+    EXCEPTIONF(n, "deref object must be an identifier");
+
+  const Symbol* sym = symtab_find(&SYMTAB, STR(object));
+  if( !sym )
+    EXCEPTIONF(n, "Undefined variable [%s]", STR(object));
+
+  //const int temp_expr = gEval(p, expr);
+
+  return SUCCESS;
+
+error:
+  return ERROR;
+}
+
 int gIdent(IRGenerator* p, const Node* n)
 {
-  const Symbol* sym = symtab_find(&p->symtab, n->raw.buffer);
+  const Symbol* sym = symtab_find(&SYMTAB, STR(n));
 
   if( !sym )
-    EXCEPTIONF(n, "Undefined variable [%s]", n->raw.buffer);
+    EXCEPTIONF(n, "Undefined variable [%s]", STR(n));
 
   return sym->vindex;
 
