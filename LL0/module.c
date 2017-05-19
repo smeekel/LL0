@@ -12,11 +12,13 @@ int module_initialize(Module* p)
   llist_initialize(&p->functions, (llistNodeDelete)listDeleteFunction);
   symtab_initialize(&p->symtab);
   imports_initialize(&p->imports);
+  constants_initialize(&p->constants);
   return SUCCESS;
 }
 
 int module_terminate(Module* p)
 {
+  constants_terminate(&p->constants);
   imports_terminate(&p->imports);
   llist_terminate(&p->functions);
   symtab_terminate(&p->symtab);
@@ -49,4 +51,5 @@ Function* module_create_function(Module* p, const char* name)
 
   return fn;
 }
+
 

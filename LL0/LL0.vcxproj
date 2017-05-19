@@ -141,6 +141,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Constant.c" />
+    <ClCompile Include="Constants.c" />
     <ClCompile Include="errsatate.c" />
     <ClCompile Include="imports.c" />
     <ClCompile Include="InputStream.c" />
@@ -157,6 +159,8 @@
     <ClCompile Include="vm.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Constant.h" />
+    <ClInclude Include="Constants.h" />
     <ClInclude Include="errstate.h" />
     <ClInclude Include="function.h" />
     <ClInclude Include="Imports.h" />

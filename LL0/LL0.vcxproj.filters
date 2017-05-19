@@ -56,6 +56,12 @@
     <ClCompile Include="imports.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Constants.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Constant.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="lexer.h">
@@ -104,6 +110,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Imports.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Constants.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Constant.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

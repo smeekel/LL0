@@ -20,12 +20,12 @@ static int    gDeref                  (IRGenerator*, const Node*);
 static int    gIdent                  (IRGenerator*, const Node*);
 static int    gAssignment             (IRGenerator*, const Node*);
 
-static IROp*        op0               (IRGenerator*, const int type);
-static IROp*        op1               (IRGenerator*, const int type, const int A);
-static IROp*        op2               (IRGenerator*, const int type, const int A, const int B);
-static IROp*        op3               (IRGenerator*, const int type, const int A, const int B, const int C);
-static void         label             (IRGenerator*, const int id);
-static int          countParameters   (const Node*);
+static IROp*  op0                     (IRGenerator*, const int type);
+static IROp*  op1                     (IRGenerator*, const int type, const int A);
+static IROp*  op2                     (IRGenerator*, const int type, const int A, const int B);
+static IROp*  op3                     (IRGenerator*, const int type, const int A, const int B, const int C);
+static void   label                   (IRGenerator*, const int id);
+static int    countParameters         (const Node*);
 
 
 #define EXCEPTIONF(n, format, ...) {\
@@ -35,8 +35,11 @@ static int          countParameters   (const Node*);
 
 #define ASSERT( x )   { if( (x)==ERROR ) goto error; }
 #define NEW_LABEL(p)  ( ++(p)->labelIndex )
+#define IS_A(x)       ( (x)->type )
 #define SYMTAB        p->module.symtab
 #define IMPORTS       p->module.imports
+#define CONSTS        p->module.constants
+
 
 int irgen_initialize(IRGenerator* p)
 {
@@ -47,10 +50,6 @@ int irgen_initialize(IRGenerator* p)
   p->global   = module_create_function(&p->module, NULL);
   p->current  = p->global;
 
-
-  Symbol* function = symtab_new(&p->module.symtab, "print");
-  function->flags   = F_FUNCTION | F_EXTERN;
-  function->vindex  = NEW_LABEL(p);
 
   return SUCCESS;
 }
@@ -432,10 +431,11 @@ error:
 
 int gLiteral(IRGenerator* p, const Node* n)
 {
-  const int temp = symtab_new_vindex(&SYMTAB);
+  const int       temp  = symtab_new_vindex(&SYMTAB);
+  const Constant* konst = constants_pin(&CONSTS, &n->raw);
 
-  IROp* op = op2(p, LOADK, 0, temp);
-  string_copy(&n->raw, &op->raw);
+  IROp* op = op2(p, LOADK, temp, konst->index);
+  
   return temp;
 }
 
@@ -460,10 +460,12 @@ error:
   return ERROR;
 }
 
+
 int gDeref(IRGenerator* p, const Node* n)
 {
   const Node* object  = n->A;
   const Node* expr    = n->B;
+  IROp* op;
 
   if( object->type!=N_IDENT )
     EXCEPTIONF(n, "deref object must be an identifier");
@@ -472,7 +474,59 @@ int gDeref(IRGenerator* p, const Node* n)
   if( !sym )
     EXCEPTIONF(n, "Undefined variable [%s]", STR(object));
 
-  //const int temp_expr = gEval(p, expr);
+  int parentr = sym->vindex;
+  while( true )
+  {
+    if( IS_A(expr)==N_IDENT )
+    {
+      const int       tempk = symtab_new_vindex(&SYMTAB);
+      const Constant* konst = constants_pin(&CONSTS, &expr->raw);
+      op = op2(p, LOADK, tempk, konst->index);
+
+      const int tempr = symtab_new_vindex(&SYMTAB);
+      op3(p, GET, parentr, tempk, tempr);
+
+      return tempr;
+    }
+    else if( IS_A(expr)==N_CALL )
+    {
+      const Node* name    = expr->A;
+      const Node* params  = expr->B;
+
+      const int       tempk = symtab_new_vindex(&SYMTAB);
+      const Constant* konst = constants_pin(&CONSTS, &name->raw);
+      op = op2(p, LOADK, tempk, konst->index);
+    
+      const int tempr = symtab_new_vindex(&SYMTAB);
+      op3(p, GET, parentr, tempk, tempr);
+
+      const int count = countParameters(params);
+      ASSERT( gPushCallParameters(p, params) );
+
+      op2(p, CALL, tempr, count);
+      op2(p, SMOV, 0, tempr);
+      op1(p, DISCARD, count+1);
+
+      return tempr;
+    }
+    else if( IS_A(expr)==N_DEREF )
+    {
+      const int       tempk   = symtab_new_vindex(&SYMTAB);
+      const Constant* konst   = constants_pin(&CONSTS, &expr->A->raw);
+      
+      op = op2(p, LOADK, tempk, konst->index);
+
+      const int tempr = symtab_new_vindex(&SYMTAB);
+      op3(p, GET, sym->vindex, tempk, tempr);
+
+      expr    = expr->B;
+      parentr = tempr;
+    }
+    else
+    {
+      EXCEPTIONF(n, "ICE: unexpected node in deref loop: %d", expr->type);
+    }
+  }
 
   return SUCCESS;
 
